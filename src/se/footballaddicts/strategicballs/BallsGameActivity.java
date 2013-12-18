@@ -6,6 +6,8 @@ import java.net.UnknownHostException;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.microedition.khronos.opengles.GL10;
+
 import org.andengine.engine.camera.Camera;
 import org.andengine.engine.handler.IUpdateHandler;
 import org.andengine.engine.handler.physics.PhysicsHandler;
@@ -16,9 +18,6 @@ import org.andengine.entity.primitive.Rectangle;
 import org.andengine.entity.scene.Scene;
 import org.andengine.entity.scene.background.AutoParallaxBackground;
 import org.andengine.entity.scene.background.ParallaxBackground.ParallaxEntity;
-import org.andengine.entity.scene.menu.MenuScene;
-import org.andengine.entity.scene.menu.MenuScene.IOnMenuItemClickListener;
-import org.andengine.entity.scene.menu.item.IMenuItem;
 import org.andengine.entity.sprite.AnimatedSprite;
 import org.andengine.entity.sprite.Sprite;
 import org.andengine.entity.util.FPSLogger;
@@ -32,6 +31,10 @@ import org.andengine.input.touch.TouchEvent;
 import org.andengine.opengl.texture.TextureOptions;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
+import org.andengine.opengl.texture.atlas.bitmap.BuildableBitmapTextureAtlas;
+import org.andengine.opengl.texture.atlas.bitmap.source.IBitmapTextureAtlasSource;
+import org.andengine.opengl.texture.atlas.buildable.builder.BlackPawnTextureAtlasBuilder;
+import org.andengine.opengl.texture.atlas.buildable.builder.ITextureAtlasBuilder.TextureAtlasBuilderException;
 import org.andengine.opengl.texture.region.ITextureRegion;
 import org.andengine.opengl.texture.region.TextureRegion;
 import org.andengine.opengl.texture.region.TiledTextureRegion;
@@ -56,65 +59,66 @@ import android.widget.Toast;
 
 public class BallsGameActivity extends SimpleBaseGameActivity
 {
-    private static final int     CAMERA_WIDTH                      = 2048;
-    private static final int     CAMERA_HEIGHT                     = 1536;
+    private static final int            CAMERA_WIDTH                      = 2048;
+    private static final int            CAMERA_HEIGHT                     = 1536;
 
-    private static final int     UI_WIDTH                          = 150;
-    private static final int     UI_HEIGHT                         = CAMERA_WIDTH;
-    private static final int     PITCH_WIDTH                       = CAMERA_WIDTH - 2 * UI_WIDTH;
-    private static final int     PITCH_HEIGHT                      = CAMERA_HEIGHT;
-    public static final float    BALL_VELOCITY                     = 500.0f;
+    private static final int            UI_WIDTH                          = 150;
+    private static final int            UI_HEIGHT                         = CAMERA_WIDTH;
+    private static final int            PITCH_WIDTH                       = CAMERA_WIDTH - 2 * UI_WIDTH;
+    private static final int            PITCH_HEIGHT                      = CAMERA_HEIGHT;
+    public static final float           BALL_VELOCITY                     = 500.0f;
 
-    private int                  mSpriteWidth                      = 88;
+    private int                         mSpriteWidth                      = 88;
 
-    private final int            mGoalWidth                        = 133;
-    private final int            mGoalHeight                       = 426;
+    private final int                   mGoalWidth                        = 133;
+    private final int                   mGoalHeight                       = 426;
 
-    private int                  mRoundButtonWidth                 = 140;
+    private int                         mRoundButtonWidth                 = 140;
 
-    private final int            minX                              = UI_WIDTH + 30;
-    private final int            maxX                              = PITCH_WIDTH - 288;
-    private final int            minY                              = 37;
-    private final int            maxY                              = PITCH_HEIGHT - 24;
+    private final int                   minX                              = UI_WIDTH + 30;
+    private final int                   maxX                              = PITCH_WIDTH - 288;
+    private final int                   minY                              = 37;
+    private final int                   maxY                              = PITCH_HEIGHT - 24;
 
-    private static final int     DIALOG_CHOOSE_SERVER_OR_CLIENT_ID = 0;
-    private static final int     DIALOG_ENTER_SERVER_IP_ID         = DIALOG_CHOOSE_SERVER_OR_CLIENT_ID + 1;
-    private static final int     DIALOG_SHOW_SERVER_IP_ID          = DIALOG_ENTER_SERVER_IP_ID + 1;
+    private static final int            DIALOG_CHOOSE_SERVER_OR_CLIENT_ID = 0;
+    private static final int            DIALOG_ENTER_SERVER_IP_ID         = DIALOG_CHOOSE_SERVER_OR_CLIENT_ID + 1;
+    private static final int            DIALOG_SHOW_SERVER_IP_ID          = DIALOG_ENTER_SERVER_IP_ID + 1;
 
     // ===========================================================
     // Fields
     // ===========================================================
 
-    private BitmapTextureAtlas   mBitmapTextureAtlas;
-    private BitmapTextureAtlas   mAutoParallaxBackgroundTexture;
+    private BitmapTextureAtlas          mBitmapTextureAtlas;
+    private BitmapTextureAtlas          mAutoParallaxBackgroundTexture;
 
-    private ITextureRegion       mParallaxLayerBack;
-    private ITextureRegion       mParallaxLayerMid;
-    private ITextureRegion       mParallaxLayerFront;
-    private ITextureRegion       mBluePlayerTextureRegion;
-    private Camera               mCamera;
+    private ITextureRegion              mParallaxLayerBack;
+    private ITextureRegion              mParallaxLayerMid;
+    private ITextureRegion              mParallaxLayerFront;
+    private ITextureRegion              mBluePlayerTextureRegion;
+    private Camera                      mCamera;
 
-    private Rectangle            mCollidingRectangle;
-    protected int                mLatestTouchEvent;
-    private Rectangle[][]        mPitchMatrix;
-    private TextureRegion        mGoalLeftTextureRegion;
-    private TextureRegion        mGoalRightTextureRegion;
-    private TiledTextureRegion   mBallTextureRegion;
-    private TextureRegion        mPossesionTextureRegion;
-    private TextureRegion        mRedPlayerTextureRegion;
-    protected Player             mLatestPlayer;
+    private Rectangle                   mCollidingRectangle;
+    protected int                       mLatestTouchEvent;
+    private Rectangle[][]               mPitchMatrix;
+    private TextureRegion               mGoalLeftTextureRegion;
+    private TextureRegion               mGoalRightTextureRegion;
+    private TiledTextureRegion          mBallTextureRegion;
+    private TextureRegion               mPossesionTextureRegion;
+    private TextureRegion               mRedPlayerTextureRegion;
+    protected Player                    mLatestPlayer;
 
-    private Set<Player>          mPlayers                          = new HashSet<Player>();
-    private float                centerX;
-    private float                centerY;
-    private BallsServer          mServer;
-    private BallsServerConnector mServerConnector;
-    private String               mServerIP;
-    protected Object             mUserID;
-    private TextureRegion        mRoundActiveTextureRegion;
-    private TextureRegion        mRoundCompleteTextureRegion;
-    private Sprite               roundActiveButton;
-    private Sprite               roundCompleteButton;
+    private Set<Player>                 mPlayers                          = new HashSet<Player>();
+    private float                       centerX;
+    private float                       centerY;
+    private BallsServer                 mServer;
+    private BallsServerConnector        mServerConnector;
+    private String                      mServerIP;
+    protected Object                    mUserID;
+    private TiledTextureRegion          mRoundActiveTextureRegion;
+    private TextureRegion               mRoundCompleteTextureRegion;
+    private Sprite                      roundActiveButton;
+    private Sprite                      roundCompleteButton;
+    private BuildableBitmapTextureAtlas mBitmapAnimatedTextureAtlas;
 
     @Override
     public EngineOptions onCreateEngineOptions()
@@ -132,6 +136,26 @@ public class BallsGameActivity extends SimpleBaseGameActivity
     protected void onCreateResources()
     {
         BitmapTextureAtlasTextureRegionFactory.setAssetBasePath( "gfx/" );
+
+        // ANIMATED PNGS
+
+        this.mBitmapAnimatedTextureAtlas = new BuildableBitmapTextureAtlas( this.getTextureManager(), 140, 140, TextureOptions.NEAREST );
+
+        // this.mBitmapTextureAtlas = new
+        // BuildableBitmapTextureAtlas(this.getTextureManager(), 512, 256,
+        // TextureOptions.BILINEAR);
+
+        this.mRoundActiveTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset( this.mBitmapAnimatedTextureAtlas, this, "banana_tiled.png", 4, 2 );
+
+        try
+        {
+            this.mBitmapAnimatedTextureAtlas.build( new BlackPawnTextureAtlasBuilder<IBitmapTextureAtlasSource, BitmapTextureAtlas>( 0, 0, 1 ) );
+            this.mBitmapAnimatedTextureAtlas.load();
+        }
+        catch( TextureAtlasBuilderException e )
+        {
+            Debug.e( e );
+        }
 
         this.mBitmapTextureAtlas = new BitmapTextureAtlas( this.getTextureManager(), mSpriteWidth, mSpriteWidth, TextureOptions.BILINEAR );
         this.mBluePlayerTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset( this.mBitmapTextureAtlas, this, "blue-player.png", 0, 0 );
@@ -159,10 +183,6 @@ public class BallsGameActivity extends SimpleBaseGameActivity
 
         this.mBitmapTextureAtlas = new BitmapTextureAtlas( this.getTextureManager(), mRoundButtonWidth, mRoundButtonWidth, TextureOptions.BILINEAR );
         this.mRoundCompleteTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset( this.mBitmapTextureAtlas, this, "round-complete.png", 0, 0 );
-        this.mBitmapTextureAtlas.load();
-
-        this.mBitmapTextureAtlas = new BitmapTextureAtlas( this.getTextureManager(), mRoundButtonWidth, mRoundButtonWidth, TextureOptions.BILINEAR );
-        this.mRoundActiveTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset( this.mBitmapTextureAtlas, this, "round-active.png", 0, 0 );
         this.mBitmapTextureAtlas.load();
 
         this.mAutoParallaxBackgroundTexture = new BitmapTextureAtlas( this.getTextureManager(), CAMERA_WIDTH, CAMERA_HEIGHT );
@@ -200,28 +220,12 @@ public class BallsGameActivity extends SimpleBaseGameActivity
 
         scene.setBackground( autoParallaxBackground );
 
-        roundActiveButton = new Sprite( CAMERA_WIDTH - UI_WIDTH, 0, mRoundButtonWidth, mRoundButtonWidth, mRoundActiveTextureRegion, this.getVertexBufferObjectManager() )
-        {
-            @Override
-            public boolean onAreaTouched( TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY )
-            {
-                toast( "END ROUND!" );
+        roundActiveButton = new Sprite( CAMERA_WIDTH - UI_WIDTH, 0, mRoundButtonWidth, mRoundButtonWidth, mRoundActiveTextureRegion, this.getVertexBufferObjectManager() );
 
-                scene.detachChild( this );
-                scene.attachChild( roundCompleteButton );
-                
-                try
-                {
-                    BallsGameActivity.this.mServerConnector.sendClientMessage( new EndRoundClientMessage( BallsGameActivity.this.mUserID, BallsGameActivity.this.mPlayers ) );
-                }
-                catch( final IOException e )
-                {
-                    Debug.e( e );
-                }
-
-                return super.onAreaTouched( pSceneTouchEvent, pTouchAreaLocalX, pTouchAreaLocalY );
-            }
-        };
+        /* Quickly twinkling face. */
+        final AnimatedSprite roundActive = new AnimatedSprite( CAMERA_WIDTH - UI_WIDTH, 0, mRoundActiveTextureRegion, this.getVertexBufferObjectManager() );
+        roundActive.animate( 100 );
+        scene.attachChild( roundActive );
 
         roundCompleteButton = new Sprite( CAMERA_WIDTH - UI_WIDTH, 0, mRoundButtonWidth, mRoundButtonWidth, mRoundCompleteTextureRegion, this.getVertexBufferObjectManager() )
         {
@@ -231,8 +235,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
                 toast( "END ROUND!" );
 
                 scene.detachChild( this );
-                scene.attachChild( roundActiveButton );
-                
+
                 try
                 {
                     BallsGameActivity.this.mServerConnector.sendClientMessage( new EndRoundClientMessage( BallsGameActivity.this.mUserID, BallsGameActivity.this.mPlayers ) );
@@ -247,8 +250,6 @@ public class BallsGameActivity extends SimpleBaseGameActivity
         };
 
         scene.attachChild( roundCompleteButton );
-        scene.attachChild( roundActiveButton );
-        scene.registerTouchArea( roundActiveButton );
         scene.registerTouchArea( roundCompleteButton );
 
         final Ball ball = new Ball( centerX, centerY, this.mBallTextureRegion, this.getVertexBufferObjectManager() );

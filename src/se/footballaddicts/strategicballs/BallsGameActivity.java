@@ -139,13 +139,13 @@ public class BallsGameActivity extends SimpleBaseGameActivity
 
         // ANIMATED PNGS
 
-        this.mBitmapAnimatedTextureAtlas = new BuildableBitmapTextureAtlas( this.getTextureManager(), 140, 140, TextureOptions.NEAREST );
+        this.mBitmapAnimatedTextureAtlas = new BuildableBitmapTextureAtlas( this.getTextureManager(), 10 * 140, 4 * 140, TextureOptions.NEAREST );
 
         // this.mBitmapTextureAtlas = new
         // BuildableBitmapTextureAtlas(this.getTextureManager(), 512, 256,
         // TextureOptions.BILINEAR);
 
-        this.mRoundActiveTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset( this.mBitmapAnimatedTextureAtlas, this, "banana_tiled.png", 4, 2 );
+        this.mRoundActiveTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset( this.mBitmapAnimatedTextureAtlas, this, "round-active-sprite.png", 10, 4 );
 
         try
         {

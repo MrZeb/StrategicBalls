@@ -1,8 +1,11 @@
 package se.footballaddicts.strategicballs;
 
+import org.andengine.entity.Entity;
 import org.andengine.entity.sprite.Sprite;
 
-public class Player
+import android.graphics.Point;
+
+public class Player extends Entity
 {
     enum Position
     {
@@ -37,22 +40,22 @@ public class Player
         A, B;
     }
 
-    private int      number;
+    private Point    coordinates;
     private Position position;
     private Team     team;
     private Sprite   sprite;
 
-    public Player( int number, Position position, Team team )
+    public Player( Point coordinates, Position position, Team team )
     {
-        this.number = number;
+        this.coordinates = coordinates;
         this.position = position;
         this.team = team;
         this.sprite = null;
     }
 
-    public Player( int number, Position position, Team team, Sprite sprite )
+    public Player( Point coordinates, Position position, Team team, Sprite sprite )
     {
-        this.number = number;
+        this.coordinates = coordinates;
         this.position = position;
         this.team = team;
         this.sprite = sprite;
@@ -68,14 +71,14 @@ public class Player
         this.position = position;
     }
 
-    public int getNumber()
+    public Point getCoordinates()
     {
-        return number;
+        return coordinates;
     }
 
-    public void setNumber( int number )
+    public void setCoordinates( Point coordinates )
     {
-        this.number = number;
+        this.coordinates = coordinates;
     }
 
     public Team getTeam()

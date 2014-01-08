@@ -12,6 +12,7 @@ import org.andengine.engine.handler.physics.PhysicsHandler;
 import org.andengine.engine.options.EngineOptions;
 import org.andengine.engine.options.ScreenOrientation;
 import org.andengine.engine.options.resolutionpolicy.RatioResolutionPolicy;
+import org.andengine.entity.Entity;
 import org.andengine.entity.primitive.Rectangle;
 import org.andengine.entity.scene.Scene;
 import org.andengine.entity.scene.background.AutoParallaxBackground;
@@ -44,11 +45,13 @@ import se.footballaddicts.strategicballs.Player.Position;
 import se.footballaddicts.strategicballs.Player.Team;
 import se.footballaddicts.strategicballs.multiplayer.BallsServer;
 import se.footballaddicts.strategicballs.multiplayer.EndRoundClientMessage;
+import se.footballaddicts.strategicballs.multiplayer.Move;
 import se.footballaddicts.strategicballs.multiplayer.server.ServerMessageFlags;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
+import android.graphics.Point;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.util.Log;
@@ -92,17 +95,14 @@ public class BallsGameActivity extends SimpleBaseGameActivity
     private ITextureRegion              mParallaxLayerBack;
     private ITextureRegion              mParallaxLayerMid;
     private ITextureRegion              mParallaxLayerFront;
-    private ITextureRegion              mBluePlayerTextureRegion;
     private Camera                      mCamera;
 
     private Rectangle                   mCollidingRectangle;
     protected int                       mLatestTouchEvent;
-    private Rectangle[][]               mPitchMatrix;
+
     private TextureRegion               mGoalLeftTextureRegion;
     private TextureRegion               mGoalRightTextureRegion;
     private TiledTextureRegion          mBallTextureRegion;
-    private TextureRegion               mPossesionTextureRegion;
-    private TextureRegion               mRedPlayerTextureRegion;
     protected Player                    mLatestPlayer;
 
     private Set<Player>                 mPlayers                          = new HashSet<Player>();
@@ -124,6 +124,11 @@ public class BallsGameActivity extends SimpleBaseGameActivity
     private TextureRegion               mGoalkeeperATextureRegion;
     private TextureRegion               mGoalkeeperBTextureRegion;
 
+    private Team                        mCurrentTeam;
+
+    private Rectangle[][]               mPitchMatrix;
+    private Entity[][]                  roundStartMatrix;
+
     @Override
     public EngineOptions onCreateEngineOptions()
     {
@@ -143,32 +148,33 @@ public class BallsGameActivity extends SimpleBaseGameActivity
 
         // ANIMATED PNGS
 
-        this.mBitmapAnimatedTextureAtlas = new BuildableBitmapTextureAtlas( this.getTextureManager(), 140 * 10, 56 * 10, TextureOptions.NEAREST );
+        createAnimatedSprites();
 
-        // this.mBitmapTextureAtlas = new
-        // BuildableBitmapTextureAtlas(this.getTextureManager(), 512, 256,
-        // TextureOptions.BILINEAR);
-
-        this.mRoundActiveTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset( this.mBitmapAnimatedTextureAtlas, this, "round_active_sprite.png", 10, 4 );
-
-        try
-        {
-            this.mBitmapAnimatedTextureAtlas.build( new BlackPawnTextureAtlasBuilder<IBitmapTextureAtlasSource, BitmapTextureAtlas>( 0, 0, 1 ) );
-            this.mBitmapAnimatedTextureAtlas.load();
-        }
-        catch( TextureAtlasBuilderException e )
-        {
-            Debug.e( e );
-        }
+        createPlayerSprites();
 
         this.mBitmapTextureAtlas = new BitmapTextureAtlas( this.getTextureManager(), mSpriteWidth, mSpriteWidth, TextureOptions.BILINEAR );
-        this.mBluePlayerTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset( this.mBitmapTextureAtlas, this, "blue-player.png", 0, 0 );
+        this.mBallTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset( this.mBitmapTextureAtlas, this, "ball.png", 0, 0, 1, 1 );
         this.mBitmapTextureAtlas.load();
 
-        this.mBitmapTextureAtlas = new BitmapTextureAtlas( this.getTextureManager(), mSpriteWidth, mSpriteWidth, TextureOptions.BILINEAR );
-        this.mRedPlayerTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset( this.mBitmapTextureAtlas, this, "red-player.png", 0, 0 );
+        this.mBitmapTextureAtlas = new BitmapTextureAtlas( this.getTextureManager(), mGoalWidth, mGoalHeight, TextureOptions.BILINEAR );
+        this.mGoalLeftTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset( this.mBitmapTextureAtlas, this, "goal_left.png", 0, 0 );
         this.mBitmapTextureAtlas.load();
 
+        this.mBitmapTextureAtlas = new BitmapTextureAtlas( this.getTextureManager(), mGoalWidth, mGoalHeight, TextureOptions.BILINEAR );
+        this.mGoalRightTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset( this.mBitmapTextureAtlas, this, "goal_right.png", 0, 0 );
+        this.mBitmapTextureAtlas.load();
+
+        this.mBitmapTextureAtlas = new BitmapTextureAtlas( this.getTextureManager(), mRoundButtonWidth, mRoundButtonWidth, TextureOptions.BILINEAR );
+        this.mRoundCompleteTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset( this.mBitmapTextureAtlas, this, "round_complete.png", 0, 0 );
+        this.mBitmapTextureAtlas.load();
+
+        this.mAutoParallaxBackgroundTexture = new BitmapTextureAtlas( this.getTextureManager(), CAMERA_WIDTH, CAMERA_HEIGHT );
+        this.mParallaxLayerBack = BitmapTextureAtlasTextureRegionFactory.createFromAsset( this.mAutoParallaxBackgroundTexture, this, "pitch_bg.jpg", 0, 0 );
+        this.mAutoParallaxBackgroundTexture.load();
+    }
+
+    private void createPlayerSprites()
+    {
         this.mBitmapTextureAtlas = new BitmapTextureAtlas( this.getTextureManager(), mSpriteWidth, mSpriteWidth, TextureOptions.BILINEAR );
         this.mDefenderATextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset( this.mBitmapTextureAtlas, this, "defender_team_a.png", 0, 0 );
         this.mBitmapTextureAtlas.load();
@@ -192,30 +198,27 @@ public class BallsGameActivity extends SimpleBaseGameActivity
         this.mBitmapTextureAtlas = new BitmapTextureAtlas( this.getTextureManager(), mSpriteWidth, mSpriteWidth, TextureOptions.BILINEAR );
         this.mGoalkeeperBTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset( this.mBitmapTextureAtlas, this, "goalkeeper_team_b.png", 0, 0 );
         this.mBitmapTextureAtlas.load();
+    }
 
-        this.mBitmapTextureAtlas = new BitmapTextureAtlas( this.getTextureManager(), mSpriteWidth, mSpriteWidth, TextureOptions.BILINEAR );
-        this.mBallTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset( this.mBitmapTextureAtlas, this, "ball.png", 0, 0, 1, 1 );
-        this.mBitmapTextureAtlas.load();
+    private void createAnimatedSprites()
+    {
+        this.mBitmapAnimatedTextureAtlas = new BuildableBitmapTextureAtlas( this.getTextureManager(), 140 * 10, 56 * 10, TextureOptions.NEAREST );
 
-        this.mBitmapTextureAtlas = new BitmapTextureAtlas( this.getTextureManager(), mSpriteWidth, mSpriteWidth, TextureOptions.BILINEAR );
-        this.mPossesionTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset( this.mBitmapTextureAtlas, this, "in-possession.png", 0, 0 );
-        this.mBitmapTextureAtlas.load();
+        // this.mBitmapTextureAtlas = new
+        // BuildableBitmapTextureAtlas(this.getTextureManager(), 512, 256,
+        // TextureOptions.BILINEAR);
 
-        this.mBitmapTextureAtlas = new BitmapTextureAtlas( this.getTextureManager(), mGoalWidth, mGoalHeight, TextureOptions.BILINEAR );
-        this.mGoalLeftTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset( this.mBitmapTextureAtlas, this, "goal-left.png", 0, 0 );
-        this.mBitmapTextureAtlas.load();
+        this.mRoundActiveTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset( this.mBitmapAnimatedTextureAtlas, this, "round_active_sprite.png", 10, 4 );
 
-        this.mBitmapTextureAtlas = new BitmapTextureAtlas( this.getTextureManager(), mGoalWidth, mGoalHeight, TextureOptions.BILINEAR );
-        this.mGoalRightTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset( this.mBitmapTextureAtlas, this, "goal-right.png", 0, 0 );
-        this.mBitmapTextureAtlas.load();
-
-        this.mBitmapTextureAtlas = new BitmapTextureAtlas( this.getTextureManager(), mRoundButtonWidth, mRoundButtonWidth, TextureOptions.BILINEAR );
-        this.mRoundCompleteTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset( this.mBitmapTextureAtlas, this, "round_complete.png", 0, 0 );
-        this.mBitmapTextureAtlas.load();
-
-        this.mAutoParallaxBackgroundTexture = new BitmapTextureAtlas( this.getTextureManager(), CAMERA_WIDTH, CAMERA_HEIGHT );
-        this.mParallaxLayerBack = BitmapTextureAtlasTextureRegionFactory.createFromAsset( this.mAutoParallaxBackgroundTexture, this, "pitch_bg.jpg", 0, 0 );
-        this.mAutoParallaxBackgroundTexture.load();
+        try
+        {
+            this.mBitmapAnimatedTextureAtlas.build( new BlackPawnTextureAtlasBuilder<IBitmapTextureAtlasSource, BitmapTextureAtlas>( 0, 0, 1 ) );
+            this.mBitmapAnimatedTextureAtlas.load();
+        }
+        catch( TextureAtlasBuilderException e )
+        {
+            Debug.e( e );
+        }
     }
 
     @Override
@@ -233,13 +236,10 @@ public class BallsGameActivity extends SimpleBaseGameActivity
 
         final Scene scene = new Scene();
 
-        float imageWidth = this.mBluePlayerTextureRegion.getWidth();
-        float imageHeight = this.mBluePlayerTextureRegion.getHeight();
+        centerX = (CAMERA_WIDTH - mSpriteWidth) / 2;
+        centerY = (CAMERA_HEIGHT - mSpriteWidth) / 2;
 
-        centerX = (CAMERA_WIDTH - imageWidth) / 2;
-        centerY = (CAMERA_HEIGHT - imageHeight) / 2;
-
-        setPlayerMatrix( scene );
+        initiatePitchMatrix( scene );
 
         final AutoParallaxBackground autoParallaxBackground = new AutoParallaxBackground( 0, 0, 0, 5 );
         final VertexBufferObjectManager vertexBufferObjectManager = this.getVertexBufferObjectManager();
@@ -253,47 +253,59 @@ public class BallsGameActivity extends SimpleBaseGameActivity
         /* Animated round image. */
         final AnimatedSprite roundActive = new AnimatedSprite( CAMERA_WIDTH - UI_WIDTH, 0, mRoundActiveTextureRegion, this.getVertexBufferObjectManager() );
         roundActive.animate( 100 );
-        scene.attachChild( roundActive );
+        // scene.attachChild( roundActive );
 
-        /*
-         * roundCompleteButton = new Sprite( CAMERA_WIDTH - UI_WIDTH, 0,
-         * mRoundButtonWidth, mRoundButtonWidth, mRoundCompleteTextureRegion,
-         * this.getVertexBufferObjectManager() ) {
-         * 
-         * @Override public boolean onAreaTouched( TouchEvent pSceneTouchEvent,
-         * float pTouchAreaLocalX, float pTouchAreaLocalY ) { toast(
-         * "END ROUND!" );
-         * 
-         * scene.detachChild( this );
-         * 
-         * try { BallsGameActivity.this.mServerConnector.sendClientMessage( new
-         * EndRoundClientMessage( BallsGameActivity.this.mUserID,
-         * BallsGameActivity.this.mPlayers ) ); } catch( final IOException e ) {
-         * Debug.e( e ); }
-         * 
-         * return super.onAreaTouched( pSceneTouchEvent, pTouchAreaLocalX,
-         * pTouchAreaLocalY ); } };
-         * 
-         * scene.attachChild( roundCompleteButton ); scene.registerTouchArea(
-         * roundCompleteButton );
-         */
+        roundCompleteButton = new Sprite( CAMERA_WIDTH - UI_WIDTH, 0, mRoundButtonWidth, mRoundButtonWidth, mRoundCompleteTextureRegion, this.getVertexBufferObjectManager() )
+        {
+            @Override
+            public boolean onAreaTouched( TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY )
+            {
+                // scene.detachChild( this );
+
+                if( pSceneTouchEvent.getAction() == TouchEvent.ACTION_UP )
+                {
+                    if( mCurrentTeam == Team.A )
+                    {
+                        mCurrentTeam = Team.B;
+                    }
+                    else
+                    {
+                        mCurrentTeam = Team.A;
+                    }
+
+                    toast( "END ROUND! Team " + mCurrentTeam + "'s turn!" );
+
+                    try
+                    {
+                        BallsGameActivity.this.mServerConnector.sendClientMessage( new EndRoundClientMessage( BallsGameActivity.this.mUserID, getMovesForRound() ) );
+                    }
+                    catch( final IOException e )
+                    {
+                        Debug.e( e );
+                    }
+
+                    roundStartMatrix = mPitchMatrix;
+                }
+
+                return super.onAreaTouched( pSceneTouchEvent, pTouchAreaLocalX, pTouchAreaLocalY );
+            }
+        };
+
+        scene.attachChild( roundCompleteButton );
+        scene.registerTouchArea( roundCompleteButton );
 
         final Ball ball = new Ball( centerX, centerY, this.mBallTextureRegion, this.getVertexBufferObjectManager() );
 
         scene.attachChild( ball );
         scene.registerTouchArea( ball );
 
-        // Add blue players
+        // Add players
         addPlayers( Team.B, scene );
         addPlayers( Team.A, scene );
 
+        roundStartMatrix = mPitchMatrix;
+
         scene.setTouchAreaBindingOnActionDownEnabled( true );
-
-        final Sprite inPossession = new Sprite( centerX, centerY, this.mPossesionTextureRegion, this.getVertexBufferObjectManager() );
-
-        scene.attachChild( inPossession );
-
-        inPossession.setAlpha( 0.0f );
 
         Sprite goalLeft = new Sprite( 0, CAMERA_HEIGHT / 2 - this.mGoalLeftTextureRegion.getHeight() / 2, this.mGoalLeftTextureRegion, this.getVertexBufferObjectManager() );
         scene.attachChild( goalLeft );
@@ -341,11 +353,6 @@ public class BallsGameActivity extends SimpleBaseGameActivity
                         // SNAP
                         mLatestPlayer.getSprite().setX( mCollidingRectangle.getX() );
                         mLatestPlayer.getSprite().setY( mCollidingRectangle.getY() );
-
-                        inPossession.setX( mCollidingRectangle.getX() );
-                        inPossession.setY( mCollidingRectangle.getY() );
-
-                        // inPossession.setAlpha( 1.0f );
                     }
                 }
 
@@ -358,6 +365,12 @@ public class BallsGameActivity extends SimpleBaseGameActivity
         } );
 
         return scene;
+    }
+
+    protected Set<Move> getMovesForRound()
+    {
+
+        return null;
     }
 
     private void initServerAndClient()
@@ -525,7 +538,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
                     break;
             }
 
-            final Player player = new Player( i, position, team );
+            final Player player = new Player( null, position, team );
 
             Sprite sprite = new Sprite( xPosition, yPosition, textureRegion, this.getVertexBufferObjectManager() )
             {
@@ -555,7 +568,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
         }
     }
 
-    private void setPlayerMatrix( Scene scene )
+    private void initiatePitchMatrix( Scene scene )
     {
         mPitchMatrix = new Rectangle[ 12 ][ 11 ];
 

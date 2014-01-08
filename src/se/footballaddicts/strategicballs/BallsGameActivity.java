@@ -20,6 +20,7 @@ import org.andengine.entity.scene.background.ParallaxBackground.ParallaxEntity;
 import org.andengine.entity.sprite.AnimatedSprite;
 import org.andengine.entity.sprite.Sprite;
 import org.andengine.entity.util.FPSLogger;
+import org.andengine.extension.multiplayer.protocol.adt.message.client.ClientMessage;
 import org.andengine.extension.multiplayer.protocol.client.connector.ServerConnector;
 import org.andengine.extension.multiplayer.protocol.client.connector.SocketConnectionServerConnector.ISocketConnectionServerConnectorListener;
 import org.andengine.extension.multiplayer.protocol.server.connector.ClientConnector;
@@ -46,6 +47,7 @@ import se.footballaddicts.strategicballs.Player.Team;
 import se.footballaddicts.strategicballs.multiplayer.BallsServer;
 import se.footballaddicts.strategicballs.multiplayer.EndRoundClientMessage;
 import se.footballaddicts.strategicballs.multiplayer.Move;
+import se.footballaddicts.strategicballs.multiplayer.Move.MoveType;
 import se.footballaddicts.strategicballs.multiplayer.server.ServerMessageFlags;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -277,7 +279,20 @@ public class BallsGameActivity extends SimpleBaseGameActivity
 
                     try
                     {
-                        BallsGameActivity.this.mServerConnector.sendClientMessage( new EndRoundClientMessage( BallsGameActivity.this.mUserID, getMovesForRound() ) );
+                        //TODO Remove dummy data
+                        
+                        Set<Move> moves = new HashSet<Move>();
+                        
+                        Move move1 = new Move( MoveType.PLAYER, new int[]{1,2}, new int[]{4,5} );
+                        moves.add( move1 );
+                        
+                        Move move2 = new Move( MoveType.PLAYER, new int[]{3,3}, new int[]{5,4} );
+                        moves.add( move2 );
+                        
+                        Move move3 = new Move( MoveType.PLAYER, new int[]{2,4}, new int[]{7,1} );
+                        moves.add( move3 );
+                        
+                        BallsGameActivity.this.mServerConnector.sendClientMessage( new EndRoundClientMessage( BallsGameActivity.this.mUserID, moves ) );
                     }
                     catch( final IOException e )
                     {

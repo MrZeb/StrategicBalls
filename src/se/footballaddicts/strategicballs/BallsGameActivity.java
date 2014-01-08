@@ -242,13 +242,13 @@ public class BallsGameActivity extends SimpleBaseGameActivity
     {
         super.onCreate( pSavedInstanceState );
     }
-    
+
     @Override
     public synchronized void onResumeGame()
     {
         super.onResumeGame();
-        
-        Log.d("SERVER", "HIYA");
+
+        Log.d( "SERVER", "HIYA" );
         this.showDialog( DIALOG_CHOOSE_SERVER_OR_CLIENT_ID );
     }
 
@@ -465,7 +465,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
         try
         {
             this.mServerConnector = new BallsServerConnector( this.mServerIP, new ExampleServerConnectorListener() );
-            
+
             this.mServerConnector.registerServerMessage( EndRoundServerMessage.FLAG_END_ROUND_MESSAGE, EndRoundServerMessage.class );
 
             this.mServerConnector.getConnection().start();
@@ -519,7 +519,6 @@ public class BallsGameActivity extends SimpleBaseGameActivity
         {
             super.read( pDataInputStream );
 
-            Log.d( "network", "READ" );
         }
     }
 
@@ -800,7 +799,15 @@ public class BallsGameActivity extends SimpleBaseGameActivity
                             @Override
                             public void onClick( final DialogInterface pDialog, final int pWhich )
                             {
-                                BallsGameActivity.this.mServerIP = ipEditText.getText().toString();
+                                if( ipEditText.getText().toString().length() > 0 )
+                                {
+                                    BallsGameActivity.this.mServerIP = ipEditText.getText().toString();
+                                }
+                                else
+                                {
+                                    BallsGameActivity.this.mServerIP = "192.168.11.158";
+                                }
+
                                 BallsGameActivity.this.initClient();
                             }
                         } ).setNegativeButton( android.R.string.cancel, new OnClickListener()
@@ -835,5 +842,4 @@ public class BallsGameActivity extends SimpleBaseGameActivity
                 return super.onCreateDialog( pID );
         }
     }
-
 }

@@ -15,8 +15,13 @@ public class EndRoundServerMessage extends ServerMessage
 {
     public static final short FLAG_END_ROUND_MESSAGE = 1;
 
-    private Object           mUserID;
-    private Set<Move>        mMoves;
+    private Object            mUserID;
+    private Set<Move>         mMoves;
+
+    public EndRoundServerMessage()
+    {
+
+    }
 
     public EndRoundServerMessage( Object userID, Set<Move> moves )
     {

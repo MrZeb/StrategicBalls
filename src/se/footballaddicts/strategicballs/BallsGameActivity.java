@@ -6,8 +6,6 @@ import java.net.UnknownHostException;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.microedition.khronos.opengles.GL10;
-
 import org.andengine.engine.camera.Camera;
 import org.andengine.engine.handler.IUpdateHandler;
 import org.andengine.engine.handler.physics.PhysicsHandler;
@@ -119,6 +117,12 @@ public class BallsGameActivity extends SimpleBaseGameActivity
     private Sprite                      roundActiveButton;
     private Sprite                      roundCompleteButton;
     private BuildableBitmapTextureAtlas mBitmapAnimatedTextureAtlas;
+    private TextureRegion               mDefenderATextureRegion;
+    private TextureRegion               mDefenderBTextureRegion;
+    private TextureRegion               mAttackerATextureRegion;
+    private TextureRegion               mAttackerBTextureRegion;
+    private TextureRegion               mGoalkeeperATextureRegion;
+    private TextureRegion               mGoalkeeperBTextureRegion;
 
     @Override
     public EngineOptions onCreateEngineOptions()
@@ -139,7 +143,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
 
         // ANIMATED PNGS
 
-        this.mBitmapAnimatedTextureAtlas = new BuildableBitmapTextureAtlas( this.getTextureManager(), 10 * 140, 4 * 140, TextureOptions.NEAREST );
+        this.mBitmapAnimatedTextureAtlas = new BuildableBitmapTextureAtlas( this.getTextureManager(), 140 * 10, 56 * 10, TextureOptions.NEAREST );
 
         // this.mBitmapTextureAtlas = new
         // BuildableBitmapTextureAtlas(this.getTextureManager(), 512, 256,
@@ -163,6 +167,30 @@ public class BallsGameActivity extends SimpleBaseGameActivity
 
         this.mBitmapTextureAtlas = new BitmapTextureAtlas( this.getTextureManager(), mSpriteWidth, mSpriteWidth, TextureOptions.BILINEAR );
         this.mRedPlayerTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset( this.mBitmapTextureAtlas, this, "red-player.png", 0, 0 );
+        this.mBitmapTextureAtlas.load();
+
+        this.mBitmapTextureAtlas = new BitmapTextureAtlas( this.getTextureManager(), mSpriteWidth, mSpriteWidth, TextureOptions.BILINEAR );
+        this.mDefenderATextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset( this.mBitmapTextureAtlas, this, "defender_team_a.png", 0, 0 );
+        this.mBitmapTextureAtlas.load();
+
+        this.mBitmapTextureAtlas = new BitmapTextureAtlas( this.getTextureManager(), mSpriteWidth, mSpriteWidth, TextureOptions.BILINEAR );
+        this.mDefenderBTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset( this.mBitmapTextureAtlas, this, "defender_team_b.png", 0, 0 );
+        this.mBitmapTextureAtlas.load();
+
+        this.mBitmapTextureAtlas = new BitmapTextureAtlas( this.getTextureManager(), mSpriteWidth, mSpriteWidth, TextureOptions.BILINEAR );
+        this.mAttackerATextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset( this.mBitmapTextureAtlas, this, "attacker_team_a.png", 0, 0 );
+        this.mBitmapTextureAtlas.load();
+
+        this.mBitmapTextureAtlas = new BitmapTextureAtlas( this.getTextureManager(), mSpriteWidth, mSpriteWidth, TextureOptions.BILINEAR );
+        this.mAttackerBTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset( this.mBitmapTextureAtlas, this, "attacker_team_b.png", 0, 0 );
+        this.mBitmapTextureAtlas.load();
+
+        this.mBitmapTextureAtlas = new BitmapTextureAtlas( this.getTextureManager(), mSpriteWidth, mSpriteWidth, TextureOptions.BILINEAR );
+        this.mGoalkeeperATextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset( this.mBitmapTextureAtlas, this, "goalkeeper_team_a.png", 0, 0 );
+        this.mBitmapTextureAtlas.load();
+
+        this.mBitmapTextureAtlas = new BitmapTextureAtlas( this.getTextureManager(), mSpriteWidth, mSpriteWidth, TextureOptions.BILINEAR );
+        this.mGoalkeeperBTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset( this.mBitmapTextureAtlas, this, "goalkeeper_team_b.png", 0, 0 );
         this.mBitmapTextureAtlas.load();
 
         this.mBitmapTextureAtlas = new BitmapTextureAtlas( this.getTextureManager(), mSpriteWidth, mSpriteWidth, TextureOptions.BILINEAR );
@@ -222,36 +250,33 @@ public class BallsGameActivity extends SimpleBaseGameActivity
 
         roundActiveButton = new Sprite( CAMERA_WIDTH - UI_WIDTH, 0, mRoundButtonWidth, mRoundButtonWidth, mRoundActiveTextureRegion, this.getVertexBufferObjectManager() );
 
-        /* Quickly twinkling face. */
+        /* Animated round image. */
         final AnimatedSprite roundActive = new AnimatedSprite( CAMERA_WIDTH - UI_WIDTH, 0, mRoundActiveTextureRegion, this.getVertexBufferObjectManager() );
         roundActive.animate( 100 );
         scene.attachChild( roundActive );
 
-        roundCompleteButton = new Sprite( CAMERA_WIDTH - UI_WIDTH, 0, mRoundButtonWidth, mRoundButtonWidth, mRoundCompleteTextureRegion, this.getVertexBufferObjectManager() )
-        {
-            @Override
-            public boolean onAreaTouched( TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY )
-            {
-                toast( "END ROUND!" );
-
-                scene.detachChild( this );
-
-                try
-                {
-                    //TODO Fix moves
-                    BallsGameActivity.this.mServerConnector.sendClientMessage( new EndRoundClientMessage( BallsGameActivity.this.mUserID, null ) );
-                }
-                catch( final IOException e )
-                {
-                    Debug.e( e );
-                }
-
-                return super.onAreaTouched( pSceneTouchEvent, pTouchAreaLocalX, pTouchAreaLocalY );
-            }
-        };
-
-        scene.attachChild( roundCompleteButton );
-        scene.registerTouchArea( roundCompleteButton );
+        /*
+         * roundCompleteButton = new Sprite( CAMERA_WIDTH - UI_WIDTH, 0,
+         * mRoundButtonWidth, mRoundButtonWidth, mRoundCompleteTextureRegion,
+         * this.getVertexBufferObjectManager() ) {
+         * 
+         * @Override public boolean onAreaTouched( TouchEvent pSceneTouchEvent,
+         * float pTouchAreaLocalX, float pTouchAreaLocalY ) { toast(
+         * "END ROUND!" );
+         * 
+         * scene.detachChild( this );
+         * 
+         * try { BallsGameActivity.this.mServerConnector.sendClientMessage( new
+         * EndRoundClientMessage( BallsGameActivity.this.mUserID,
+         * BallsGameActivity.this.mPlayers ) ); } catch( final IOException e ) {
+         * Debug.e( e ); }
+         * 
+         * return super.onAreaTouched( pSceneTouchEvent, pTouchAreaLocalX,
+         * pTouchAreaLocalY ); } };
+         * 
+         * scene.attachChild( roundCompleteButton ); scene.registerTouchArea(
+         * roundCompleteButton );
+         */
 
         final Ball ball = new Ball( centerX, centerY, this.mBallTextureRegion, this.getVertexBufferObjectManager() );
 
@@ -259,8 +284,8 @@ public class BallsGameActivity extends SimpleBaseGameActivity
         scene.registerTouchArea( ball );
 
         // Add blue players
-        addPlayers( Team.BLUE, scene );
-        addPlayers( Team.RED, scene );
+        addPlayers( Team.B, scene );
+        addPlayers( Team.A, scene );
 
         scene.setTouchAreaBindingOnActionDownEnabled( true );
 
@@ -421,68 +446,84 @@ public class BallsGameActivity extends SimpleBaseGameActivity
     {
         for( int i = 0; i < 6; i++ )
         {
-            Position position;
+            Position position = Position.getPositionForIndex( i );
+
             float xPosition = 0;
             float yPosition = 0;
 
-            if( i == 0 )
+            ITextureRegion textureRegion = null;
+
+            switch( position )
             {
-                position = Position.GOALKEEPER;
+                case ATTACKER:
 
-                if( team == Team.RED )
-                {
-                    xPosition = mPitchMatrix[0][5].getX();
-                    yPosition = mPitchMatrix[0][5].getY();
-                }
-                else
-                {
-                    xPosition = mPitchMatrix[mPitchMatrix[5].length][5].getX();
-                    yPosition = mPitchMatrix[mPitchMatrix[5].length][5].getY();
-                }
+                    if( team == Team.A )
+                    {
+                        xPosition = mPitchMatrix[5][3].getX();
+
+                        textureRegion = mAttackerATextureRegion;
+                    }
+                    else
+                    {
+                        xPosition = mPitchMatrix[mPitchMatrix[5].length - 5][3].getX();
+
+                        textureRegion = mAttackerBTextureRegion;
+                    }
+
+                    switch( i )
+                    {
+                        case 3:
+                            yPosition = mPitchMatrix[3][2].getY();
+                            break;
+                        case 4:
+                            yPosition = mPitchMatrix[3][5].getY();
+                            break;
+                        case 5:
+                            yPosition = mPitchMatrix[3][8].getY();
+                            break;
+                    }
+                    break;
+
+                case DEFENDER:
+
+                    if( team == Team.A )
+                    {
+                        xPosition = mPitchMatrix[3][3].getX();
+                        yPosition = i == 1 ? mPitchMatrix[3][3].getY() : mPitchMatrix[3][7].getY();
+
+                        textureRegion = mDefenderATextureRegion;
+                    }
+                    else
+                    {
+                        xPosition = mPitchMatrix[mPitchMatrix[5].length - 3][3].getX();
+                        yPosition = i == 1 ? mPitchMatrix[mPitchMatrix[5].length - 3][3].getY() : mPitchMatrix[mPitchMatrix[5].length - 3][7].getY();
+
+                        textureRegion = mDefenderBTextureRegion;
+                    }
+                    break;
+
+                case GOALKEEPER:
+
+                    if( team == Team.A )
+                    {
+                        xPosition = mPitchMatrix[0][5].getX();
+                        yPosition = mPitchMatrix[0][5].getY();
+
+                        textureRegion = mGoalkeeperATextureRegion;
+                    }
+                    else
+                    {
+                        xPosition = mPitchMatrix[mPitchMatrix[5].length][5].getX();
+                        yPosition = mPitchMatrix[mPitchMatrix[5].length][5].getY();
+
+                        textureRegion = mGoalkeeperBTextureRegion;
+                    }
+                    
+                    break;
+
+                default:
+                    break;
             }
-            else if( i == 1 || i == 2 )
-            {
-                position = Position.DEFENDER;
-
-                if( team == Team.RED )
-                {
-                    xPosition = mPitchMatrix[3][3].getX();
-                    yPosition = i == 1 ? mPitchMatrix[3][3].getY() : mPitchMatrix[3][7].getY();
-                }
-                else
-                {
-                    xPosition = mPitchMatrix[mPitchMatrix[5].length - 3][3].getX();
-                    yPosition = i == 1 ? mPitchMatrix[mPitchMatrix[5].length - 3][3].getY() : mPitchMatrix[mPitchMatrix[5].length - 3][7].getY();
-                }
-            }
-            else
-            {
-                position = Position.ATTACKER;
-
-                if( team == Team.RED )
-                {
-                    xPosition = mPitchMatrix[5][3].getX();
-                }
-                else
-                {
-                    xPosition = mPitchMatrix[mPitchMatrix[5].length - 5][3].getX();
-                }
-
-                switch( i )
-                {
-                    case 3:
-                        yPosition = mPitchMatrix[3][2].getY();
-                        break;
-                    case 4:
-                        yPosition = mPitchMatrix[3][5].getY();
-                        break;
-                    case 5:
-                        yPosition = mPitchMatrix[3][8].getY();
-                        break;
-                }
-            }
-
-            ITextureRegion textureRegion = team == Team.RED ? this.mRedPlayerTextureRegion : this.mBluePlayerTextureRegion;
 
             final Player player = new Player( i, position, team );
 
@@ -527,7 +568,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
                 int x = minX + i * (maxX / (row.length - 1));
                 int y = minY + p * (maxY / (mPitchMatrix.length - 1));
 
-                final Rectangle centerRectangle = new Rectangle( x, y, 10, 10, this.getVertexBufferObjectManager() );
+                final Rectangle centerRectangle = new Rectangle( x, y, 0, 0, this.getVertexBufferObjectManager() );
 
                 mPitchMatrix[i][p] = centerRectangle;
 

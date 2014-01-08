@@ -6,12 +6,35 @@ public class Player
 {
     enum Position
     {
-        GOALKEEPER, DEFENDER, ATTACKER;
+        GOALKEEPER( 1 ), DEFENDER( 1 ), ATTACKER( 3 );
+
+        int moves;
+
+        Position( int moves )
+        {
+            this.moves = moves;
+        }
+
+        public static Position getPositionForIndex( int index )
+        {
+            if( index == 0 )
+            {
+                return GOALKEEPER;
+            }
+            else if( index == 1 || index == 2 )
+            {
+                return DEFENDER;
+            }
+            else
+            {
+                return ATTACKER;
+            }
+        }
     }
 
     enum Team
     {
-        RED, BLUE;
+        A, B;
     }
 
     private int      number;

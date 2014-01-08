@@ -13,7 +13,7 @@ import android.graphics.Point;
 
 public class EndRoundServerMessage extends ServerMessage
 {
-    private static final int FLAG_END_ROUND_MESSAGE = 1;
+    public static final short FLAG_END_ROUND_MESSAGE = 1;
 
     private Object           mUserID;
     private Set<Move>        mMoves;

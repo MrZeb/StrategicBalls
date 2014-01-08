@@ -1,5 +1,6 @@
 package se.footballaddicts.strategicballs;
 
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.UnknownHostException;
@@ -47,6 +48,7 @@ import se.footballaddicts.strategicballs.Player.Position;
 import se.footballaddicts.strategicballs.Player.Team;
 import se.footballaddicts.strategicballs.multiplayer.BallsServer;
 import se.footballaddicts.strategicballs.multiplayer.EndRoundClientMessage;
+import se.footballaddicts.strategicballs.multiplayer.EndRoundServerMessage;
 import se.footballaddicts.strategicballs.multiplayer.Move;
 import se.footballaddicts.strategicballs.multiplayer.Move.MoveType;
 import se.footballaddicts.strategicballs.multiplayer.server.ServerMessageFlags;
@@ -227,7 +229,14 @@ public class BallsGameActivity extends SimpleBaseGameActivity
     protected void onCreate( Bundle pSavedInstanceState )
     {
         super.onCreate( pSavedInstanceState );
-
+    }
+    
+    @Override
+    public synchronized void onResumeGame()
+    {
+        super.onResumeGame();
+        
+        Log.d("SERVER", "HIYA");
         this.showDialog( DIALOG_CHOOSE_SERVER_OR_CLIENT_ID );
     }
 
@@ -425,6 +434,8 @@ public class BallsGameActivity extends SimpleBaseGameActivity
         try
         {
             this.mServerConnector = new BallsServerConnector( this.mServerIP, new ExampleServerConnectorListener() );
+            
+            this.mServerConnector.registerServerMessage( EndRoundServerMessage.FLAG_END_ROUND_MESSAGE, EndRoundServerMessage.class );
 
             this.mServerConnector.getConnection().start();
         }
@@ -768,6 +779,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
                             @Override
                             public void onClick( final DialogInterface pDialog, final int pWhich )
                             {
+                                Log.d("SERVER", "HIYB");
                                 BallsGameActivity.this.showDialog( DIALOG_ENTER_SERVER_IP_ID );
                             }
                         } ).setNeutralButton( "Server", new OnClickListener()
@@ -775,6 +787,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
                             @Override
                             public void onClick( final DialogInterface pDialog, final int pWhich )
                             {
+                                Log.d("SERVER", "HIYC");
                                 BallsGameActivity.this.initServerAndClient();
                                 BallsGameActivity.this.showDialog( DIALOG_SHOW_SERVER_IP_ID );
                             }

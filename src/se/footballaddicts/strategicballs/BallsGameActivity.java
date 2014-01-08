@@ -21,6 +21,8 @@ import org.andengine.entity.scene.background.ParallaxBackground.ParallaxEntity;
 import org.andengine.entity.shape.RectangularShape;
 import org.andengine.entity.sprite.AnimatedSprite;
 import org.andengine.entity.sprite.Sprite;
+import org.andengine.entity.text.Text;
+import org.andengine.entity.text.TextOptions;
 import org.andengine.entity.util.FPSLogger;
 import org.andengine.extension.multiplayer.protocol.adt.message.client.ClientMessage;
 import org.andengine.extension.multiplayer.protocol.client.connector.ServerConnector;
@@ -30,6 +32,8 @@ import org.andengine.extension.multiplayer.protocol.server.connector.SocketConne
 import org.andengine.extension.multiplayer.protocol.shared.SocketConnection;
 import org.andengine.extension.multiplayer.protocol.util.WifiUtils;
 import org.andengine.input.touch.TouchEvent;
+import org.andengine.opengl.font.Font;
+import org.andengine.opengl.font.FontFactory;
 import org.andengine.opengl.texture.TextureOptions;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
@@ -42,6 +46,8 @@ import org.andengine.opengl.texture.region.TextureRegion;
 import org.andengine.opengl.texture.region.TiledTextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.ui.activity.SimpleBaseGameActivity;
+import org.andengine.util.HorizontalAlign;
+import org.andengine.util.color.Color;
 import org.andengine.util.debug.Debug;
 
 import se.footballaddicts.strategicballs.Player.Position;
@@ -57,6 +63,7 @@ import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.graphics.Point;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.util.Log;
@@ -132,6 +139,8 @@ public class BallsGameActivity extends SimpleBaseGameActivity
     private Team                        mCurrentTeam;
 
     private Entity[][]                  mPitchMatrix;
+    protected boolean                   isServer;
+    private Font                        mFont;
 
     @Override
     public EngineOptions onCreateEngineOptions()
@@ -155,6 +164,9 @@ public class BallsGameActivity extends SimpleBaseGameActivity
         createAnimatedSprites();
 
         createPlayerSprites();
+
+        this.mFont = FontFactory.create( this.getFontManager(), this.getTextureManager(), 256, 256, Typeface.create( Typeface.DEFAULT, Typeface.BOLD ), 32, android.graphics.Color.WHITE );
+        this.mFont.load();
 
         this.mBitmapTextureAtlas = new BitmapTextureAtlas( this.getTextureManager(), mSpriteWidth, mSpriteWidth, TextureOptions.BILINEAR );
         this.mBallTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset( this.mBitmapTextureAtlas, this, "ball.png", 0, 0, 1, 1 );
@@ -315,6 +327,25 @@ public class BallsGameActivity extends SimpleBaseGameActivity
             public void onUpdate( final float pSecondsElapsed )
             {
                 boolean collide = false;
+
+                if( isServer )
+                {
+                    Text leftText = null;
+
+                    try
+                    {
+                        leftText = new Text( 0, 0, BallsGameActivity.this.mFont, WifiUtils.getWifiIPv4Address( BallsGameActivity.this ), new TextOptions( HorizontalAlign.LEFT ),
+                                vertexBufferObjectManager );
+
+                        isServer = false;
+                    }
+                    catch( UnknownHostException e )
+                    {
+                        e.printStackTrace();
+                    }
+
+                    scene.attachChild( leftText );
+                }
 
                 if( mLatestPlayer != null )
                 {
@@ -481,6 +512,14 @@ public class BallsGameActivity extends SimpleBaseGameActivity
         public BallsServerConnector( final String pServerIP, final ISocketConnectionServerConnectorListener pSocketConnectionServerConnectorListener ) throws IOException
         {
             super( new SocketConnection( new Socket( pServerIP, SERVER_PORT ) ), pSocketConnectionServerConnectorListener );
+        }
+
+        @Override
+        public void read( DataInputStream pDataInputStream ) throws IOException
+        {
+            super.read( pDataInputStream );
+
+            Log.d( "network", "READ" );
         }
     }
 
@@ -779,7 +818,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
                             @Override
                             public void onClick( final DialogInterface pDialog, final int pWhich )
                             {
-                                Log.d("SERVER", "HIYB");
+                                isServer = false;
                                 BallsGameActivity.this.showDialog( DIALOG_ENTER_SERVER_IP_ID );
                             }
                         } ).setNeutralButton( "Server", new OnClickListener()
@@ -787,7 +826,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
                             @Override
                             public void onClick( final DialogInterface pDialog, final int pWhich )
                             {
-                                Log.d("SERVER", "HIYC");
+                                isServer = true;
                                 BallsGameActivity.this.initServerAndClient();
                                 BallsGameActivity.this.showDialog( DIALOG_SHOW_SERVER_IP_ID );
                             }

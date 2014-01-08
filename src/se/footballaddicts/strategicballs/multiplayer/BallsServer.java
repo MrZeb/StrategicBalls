@@ -24,6 +24,7 @@ import se.footballaddicts.strategicballs.multiplayer.server.ConnectionEstablishe
 import se.footballaddicts.strategicballs.multiplayer.server.ConnectionPongServerMessage;
 import se.footballaddicts.strategicballs.multiplayer.server.ConnectionRejectedProtocolMissmatchServerMessage;
 import se.footballaddicts.strategicballs.multiplayer.server.ServerMessageFlags;
+import android.util.Log;
 
 import com.badlogic.gdx.physics.box2d.Contact;
 import com.badlogic.gdx.physics.box2d.ContactImpulse;
@@ -43,6 +44,16 @@ public class BallsServer extends SocketServer<SocketConnectionClientConnector> i
     protected SocketConnectionClientConnector newClientConnector( SocketConnection pSocketConnection ) throws IOException
     {
         final SocketConnectionClientConnector clientConnector = new SocketConnectionClientConnector( pSocketConnection );
+        
+        clientConnector.registerClientMessage( EndRoundClientMessage.FLAG_END_ROUND_MESSAGE, EndRoundClientMessage.class, new IClientMessageHandler<SocketConnection>()
+        {
+
+            @Override
+            public void onHandleMessage( ClientConnector<SocketConnection> pClientConnector, IClientMessage pClientMessage )
+                    throws IOException
+            {
+                 
+            }} );
 
         clientConnector.registerClientMessage( FLAG_MESSAGE_CLIENT_CONNECTION_CLOSE, ConnectionCloseClientMessage.class, new IClientMessageHandler<SocketConnection>()
         {

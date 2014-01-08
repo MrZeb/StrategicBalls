@@ -254,6 +254,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
         final AnimatedSprite roundActive = new AnimatedSprite( CAMERA_WIDTH - UI_WIDTH, 0, mRoundActiveTextureRegion, this.getVertexBufferObjectManager() );
         roundActive.animate( 100 );
         scene.attachChild( roundActive );
+
         /*
          * roundCompleteButton = new Sprite( CAMERA_WIDTH - UI_WIDTH, 0,
          * mRoundButtonWidth, mRoundButtonWidth, mRoundCompleteTextureRegion,

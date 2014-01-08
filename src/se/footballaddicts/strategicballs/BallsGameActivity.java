@@ -238,7 +238,8 @@ public class BallsGameActivity extends SimpleBaseGameActivity
 
                 try
                 {
-                    BallsGameActivity.this.mServerConnector.sendClientMessage( new EndRoundClientMessage( BallsGameActivity.this.mUserID, BallsGameActivity.this.mPlayers ) );
+                    //TODO Fix moves
+                    BallsGameActivity.this.mServerConnector.sendClientMessage( new EndRoundClientMessage( BallsGameActivity.this.mUserID, null ) );
                 }
                 catch( final IOException e )
                 {

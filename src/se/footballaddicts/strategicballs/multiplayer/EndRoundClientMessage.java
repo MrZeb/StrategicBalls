@@ -12,13 +12,13 @@ import se.footballaddicts.strategicballs.Player;
 
 public class EndRoundClientMessage extends ClientMessage implements BallsConstants
 {
-    private Object      mUserID;
-    private Set<Player> mPlayers;
+    private Object    mUserID;
+    private Set<Move> mMoves;
 
-    public EndRoundClientMessage( Object userID, Set<Player> players )
+    public EndRoundClientMessage( Object userID, Set<Move> moves )
     {
         this.setmUserID( userID );
-        this.setmPlayers( players );
+        this.setMoves( moves );
     }
 
     @Override
@@ -66,14 +66,14 @@ public class EndRoundClientMessage extends ClientMessage implements BallsConstan
         this.mUserID = mUserID;
     }
 
-    public Set<Player> getmPlayers()
+    public Set<Move> getMoves()
     {
-        return mPlayers;
+        return mMoves;
     }
 
-    public void setmPlayers( Set<Player> mPlayers )
+    public void setMoves( Set<Move> moves )
     {
-        this.mPlayers = mPlayers;
+        this.mMoves = moves;
     }
 
 }

@@ -52,7 +52,7 @@ public class BallsServer extends SocketServer<SocketConnectionClientConnector> i
             public void onHandleMessage( ClientConnector<SocketConnection> pClientConnector, IClientMessage pClientMessage )
                     throws IOException
             {
-                 
+                 Log.d("Hola", "dola=" + pClientMessage.toString());
             }} );
 
         clientConnector.registerClientMessage( FLAG_MESSAGE_CLIENT_CONNECTION_CLOSE, ConnectionCloseClientMessage.class, new IClientMessageHandler<SocketConnection>()

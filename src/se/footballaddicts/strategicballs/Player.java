@@ -34,7 +34,7 @@ public class Player
 
     enum Team
     {
-        RED, BLUE;
+        A, B;
     }
 
     private int      number;

@@ -6,8 +6,6 @@ import java.net.UnknownHostException;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.microedition.khronos.opengles.GL10;
-
 import org.andengine.engine.camera.Camera;
 import org.andengine.engine.handler.IUpdateHandler;
 import org.andengine.engine.handler.physics.PhysicsHandler;
@@ -139,13 +137,14 @@ public class BallsGameActivity extends SimpleBaseGameActivity
 
         // ANIMATED PNGS
 
-        this.mBitmapAnimatedTextureAtlas = new BuildableBitmapTextureAtlas( this.getTextureManager(), 10 * 140, 4 * 140, TextureOptions.NEAREST );
+
+        this.mBitmapAnimatedTextureAtlas = new BuildableBitmapTextureAtlas( this.getTextureManager(), 140*10, 56*10, TextureOptions.NEAREST );
 
         // this.mBitmapTextureAtlas = new
         // BuildableBitmapTextureAtlas(this.getTextureManager(), 512, 256,
         // TextureOptions.BILINEAR);
 
-        this.mRoundActiveTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset( this.mBitmapAnimatedTextureAtlas, this, "round-active-sprite.png", 10, 4 );
+        this.mRoundActiveTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset( this.mBitmapAnimatedTextureAtlas, this, "round-active-sprite.png", 10, 4);
 
         try
         {
@@ -226,7 +225,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
         final AnimatedSprite roundActive = new AnimatedSprite( CAMERA_WIDTH - UI_WIDTH, 0, mRoundActiveTextureRegion, this.getVertexBufferObjectManager() );
         roundActive.animate( 100 );
         scene.attachChild( roundActive );
-
+/*
         roundCompleteButton = new Sprite( CAMERA_WIDTH - UI_WIDTH, 0, mRoundButtonWidth, mRoundButtonWidth, mRoundCompleteTextureRegion, this.getVertexBufferObjectManager() )
         {
             @Override
@@ -250,7 +249,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
         };
 
         scene.attachChild( roundCompleteButton );
-        scene.registerTouchArea( roundCompleteButton );
+        scene.registerTouchArea( roundCompleteButton );*/
 
         final Ball ball = new Ball( centerX, centerY, this.mBallTextureRegion, this.getVertexBufferObjectManager() );
 
@@ -420,65 +419,68 @@ public class BallsGameActivity extends SimpleBaseGameActivity
     {
         for( int i = 0; i < 6; i++ )
         {
-            Position position;
+            Position position = Position.getPositionForIndex( i );
+
             float xPosition = 0;
             float yPosition = 0;
 
-            if( i == 0 )
+            switch( position )
             {
-                position = Position.GOALKEEPER;
+                case ATTACKER:
 
-                if( team == Team.RED )
-                {
-                    xPosition = mPitchMatrix[0][5].getX();
-                    yPosition = mPitchMatrix[0][5].getY();
-                }
-                else
-                {
-                    xPosition = mPitchMatrix[mPitchMatrix[5].length][5].getX();
-                    yPosition = mPitchMatrix[mPitchMatrix[5].length][5].getY();
-                }
-            }
-            else if( i == 1 || i == 2 )
-            {
-                position = Position.DEFENDER;
+                    if( team == Team.RED )
+                    {
+                        xPosition = mPitchMatrix[5][3].getX();
+                    }
+                    else
+                    {
+                        xPosition = mPitchMatrix[mPitchMatrix[5].length - 5][3].getX();
+                    }
 
-                if( team == Team.RED )
-                {
-                    xPosition = mPitchMatrix[3][3].getX();
-                    yPosition = i == 1 ? mPitchMatrix[3][3].getY() : mPitchMatrix[3][7].getY();
-                }
-                else
-                {
-                    xPosition = mPitchMatrix[mPitchMatrix[5].length - 3][3].getX();
-                    yPosition = i == 1 ? mPitchMatrix[mPitchMatrix[5].length - 3][3].getY() : mPitchMatrix[mPitchMatrix[5].length - 3][7].getY();
-                }
-            }
-            else
-            {
-                position = Position.ATTACKER;
+                    switch( i )
+                    {
+                        case 3:
+                            yPosition = mPitchMatrix[3][2].getY();
+                            break;
+                        case 4:
+                            yPosition = mPitchMatrix[3][5].getY();
+                            break;
+                        case 5:
+                            yPosition = mPitchMatrix[3][8].getY();
+                            break;
+                    }
+                    break;
 
-                if( team == Team.RED )
-                {
-                    xPosition = mPitchMatrix[5][3].getX();
-                }
-                else
-                {
-                    xPosition = mPitchMatrix[mPitchMatrix[5].length - 5][3].getX();
-                }
+                case DEFENDER:
 
-                switch( i )
-                {
-                    case 3:
-                        yPosition = mPitchMatrix[3][2].getY();
-                        break;
-                    case 4:
-                        yPosition = mPitchMatrix[3][5].getY();
-                        break;
-                    case 5:
-                        yPosition = mPitchMatrix[3][8].getY();
-                        break;
-                }
+                    if( team == Team.RED )
+                    {
+                        xPosition = mPitchMatrix[3][3].getX();
+                        yPosition = i == 1 ? mPitchMatrix[3][3].getY() : mPitchMatrix[3][7].getY();
+                    }
+                    else
+                    {
+                        xPosition = mPitchMatrix[mPitchMatrix[5].length - 3][3].getX();
+                        yPosition = i == 1 ? mPitchMatrix[mPitchMatrix[5].length - 3][3].getY() : mPitchMatrix[mPitchMatrix[5].length - 3][7].getY();
+                    }
+                    break;
+
+                case GOALKEEPER:
+
+                    if( team == Team.RED )
+                    {
+                        xPosition = mPitchMatrix[0][5].getX();
+                        yPosition = mPitchMatrix[0][5].getY();
+                    }
+                    else
+                    {
+                        xPosition = mPitchMatrix[mPitchMatrix[5].length][5].getX();
+                        yPosition = mPitchMatrix[mPitchMatrix[5].length][5].getY();
+                    }
+                    break;
+
+                default:
+                    break;
             }
 
             ITextureRegion textureRegion = team == Team.RED ? this.mRedPlayerTextureRegion : this.mBluePlayerTextureRegion;
@@ -526,7 +528,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
                 int x = minX + i * (maxX / (row.length - 1));
                 int y = minY + p * (maxY / (mPitchMatrix.length - 1));
 
-                final Rectangle centerRectangle = new Rectangle( x, y, 10, 10, this.getVertexBufferObjectManager() );
+                final Rectangle centerRectangle = new Rectangle( x, y, 0, 0, this.getVertexBufferObjectManager() );
 
                 mPitchMatrix[i][p] = centerRectangle;
 

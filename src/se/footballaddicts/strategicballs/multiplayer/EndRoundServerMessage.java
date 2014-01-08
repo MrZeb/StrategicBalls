@@ -17,6 +17,10 @@ public class EndRoundServerMessage extends ServerMessage
 
     private Object           mUserID;
     private Set<Move>        mMoves;
+    
+    public EndRoundServerMessage()
+    {
+    }
 
     public EndRoundServerMessage( Object userID, Set<Move> moves )
     {

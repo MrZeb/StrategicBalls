@@ -6,18 +6,18 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.andengine.extension.multiplayer.protocol.adt.message.client.ClientMessage;
+import org.andengine.extension.multiplayer.protocol.adt.message.server.ServerMessage;
 
 import se.footballaddicts.strategicballs.multiplayer.Move.MoveType;
 
-public class EndRoundClientMessage extends ClientMessage
+public class EndRoundServerMessage extends ServerMessage
 {
     private static final int FLAG_END_ROUND_MESSAGE = 1;
     
     private Object    mUserID;
     private Set<Move> mMoves;
 
-    public EndRoundClientMessage( Object userID, Set<Move> moves )
+    public EndRoundServerMessage( Object userID, Set<Move> moves )
     {
         this.setmUserID( userID );
         this.setMoves( moves );

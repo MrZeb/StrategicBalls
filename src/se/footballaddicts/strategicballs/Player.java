@@ -40,14 +40,15 @@ public class Player extends Entity
         A, B;
     }
 
-    private Point    coordinates;
+    private Point    currentCoordinates;
+    private Point    roundStartCoordinates;
     private Position position;
     private Team     team;
     private Sprite   sprite;
 
     public Player( Point coordinates, Position position, Team team )
     {
-        this.coordinates = coordinates;
+        this.roundStartCoordinates = coordinates;
         this.position = position;
         this.team = team;
         this.sprite = null;
@@ -55,7 +56,7 @@ public class Player extends Entity
 
     public Player( Point coordinates, Position position, Team team, Sprite sprite )
     {
-        this.coordinates = coordinates;
+        this.roundStartCoordinates = coordinates;
         this.position = position;
         this.team = team;
         this.sprite = sprite;
@@ -71,14 +72,14 @@ public class Player extends Entity
         this.position = position;
     }
 
-    public Point getCoordinates()
+    public Point getCurrentCoordinates()
     {
-        return coordinates;
+        return currentCoordinates;
     }
 
-    public void setCoordinates( Point coordinates )
+    public void setCurrentCoordinates( Point coordinates )
     {
-        this.coordinates = coordinates;
+        this.currentCoordinates = coordinates;
     }
 
     public Team getTeam()
@@ -99,5 +100,15 @@ public class Player extends Entity
     public void setSprite( Sprite sprite )
     {
         this.sprite = sprite;
+    }
+
+    public Point getRoundStartCoordinates()
+    {
+        return roundStartCoordinates;
+    }
+
+    public void setRoundStartCoordinates( Point roundStartCoordinates )
+    {
+        this.roundStartCoordinates = roundStartCoordinates;
     }
 }

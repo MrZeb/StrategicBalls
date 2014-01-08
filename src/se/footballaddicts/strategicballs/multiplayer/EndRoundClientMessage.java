@@ -9,6 +9,7 @@ import java.util.Set;
 import org.andengine.extension.multiplayer.protocol.adt.message.client.ClientMessage;
 
 import se.footballaddicts.strategicballs.multiplayer.Move.MoveType;
+import android.graphics.Point;
 
 public class EndRoundClientMessage extends ClientMessage
 {
@@ -39,13 +40,12 @@ public class EndRoundClientMessage extends ClientMessage
         for( int i = 0; i < size; i++ )
         {
             MoveType moveType = MoveType.getMoveTypeFromId( pDataInputStream.readInt() );
-            int[] from = new int[ 2 ];
-            from[0] = pDataInputStream.readInt();
-            from[1] = pDataInputStream.readInt();
-            int[] to = new int[ 2 ];
-            to[0] = pDataInputStream.readInt();
-            to[1] = pDataInputStream.readInt();
+
+            Point from = new Point( pDataInputStream.readInt(), pDataInputStream.readInt() );
+            Point to = new Point( pDataInputStream.readInt(), pDataInputStream.readInt() );
+
             Move move = new Move( moveType, from, to );
+
             mMoves.add( move );
         }
     }
@@ -54,13 +54,14 @@ public class EndRoundClientMessage extends ClientMessage
     protected void onWriteTransmissionData( DataOutputStream pDataOutputStream ) throws IOException
     {
         pDataOutputStream.writeInt( mMoves.size() );
-        for ( Move move : mMoves )
+        
+        for( Move move : mMoves )
         {
             pDataOutputStream.writeInt( move.getMoveType().id );
-            pDataOutputStream.writeInt( move.getFrom()[0] );
-            pDataOutputStream.writeInt( move.getFrom()[1] );
-            pDataOutputStream.writeInt( move.getTo()[0] );
-            pDataOutputStream.writeInt( move.getTo()[1] );
+            pDataOutputStream.writeInt( move.getFrom().x );
+            pDataOutputStream.writeInt( move.getFrom().y );
+            pDataOutputStream.writeInt( move.getTo().x );
+            pDataOutputStream.writeInt( move.getTo().y );
         }
     }
 

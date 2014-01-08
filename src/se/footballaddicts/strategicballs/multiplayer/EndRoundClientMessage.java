@@ -13,10 +13,10 @@ import android.graphics.Point;
 
 public class EndRoundClientMessage extends ClientMessage
 {
-    private static final int FLAG_END_ROUND_MESSAGE = 1;
-
-    private Object           mUserID;
-    private Set<Move>        mMoves;
+    private static final short FLAG_END_ROUND_MESSAGE = 1;
+    
+    private Object    mUserID;
+    private Set<Move> mMoves;
 
     public EndRoundClientMessage( Object userID, Set<Move> moves )
     {

@@ -149,7 +149,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
         // BuildableBitmapTextureAtlas(this.getTextureManager(), 512, 256,
         // TextureOptions.BILINEAR);
 
-        this.mRoundActiveTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset( this.mBitmapAnimatedTextureAtlas, this, "round-active-sprite.png", 10, 4 );
+        this.mRoundActiveTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset( this.mBitmapAnimatedTextureAtlas, this, "round_active_sprite.png", 10, 4 );
 
         try
         {
@@ -178,11 +178,11 @@ public class BallsGameActivity extends SimpleBaseGameActivity
         this.mBitmapTextureAtlas.load();
 
         this.mBitmapTextureAtlas = new BitmapTextureAtlas( this.getTextureManager(), mSpriteWidth, mSpriteWidth, TextureOptions.BILINEAR );
-        this.mAttackerATextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset( this.mBitmapTextureAtlas, this, "attacker_team_a.png", 0, 0 );
+        this.mAttackerATextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset( this.mBitmapTextureAtlas, this, "forward_team_a.png", 0, 0 );
         this.mBitmapTextureAtlas.load();
 
         this.mBitmapTextureAtlas = new BitmapTextureAtlas( this.getTextureManager(), mSpriteWidth, mSpriteWidth, TextureOptions.BILINEAR );
-        this.mAttackerBTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset( this.mBitmapTextureAtlas, this, "attacker_team_b.png", 0, 0 );
+        this.mAttackerBTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset( this.mBitmapTextureAtlas, this, "forward_team_b.png", 0, 0 );
         this.mBitmapTextureAtlas.load();
 
         this.mBitmapTextureAtlas = new BitmapTextureAtlas( this.getTextureManager(), mSpriteWidth, mSpriteWidth, TextureOptions.BILINEAR );
@@ -194,7 +194,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
         this.mBitmapTextureAtlas.load();
 
         this.mBitmapTextureAtlas = new BitmapTextureAtlas( this.getTextureManager(), mSpriteWidth, mSpriteWidth, TextureOptions.BILINEAR );
-        this.mBallTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset( this.mBitmapTextureAtlas, this, "loose-ball.png", 0, 0, 1, 1 );
+        this.mBallTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset( this.mBitmapTextureAtlas, this, "ball.png", 0, 0, 1, 1 );
         this.mBitmapTextureAtlas.load();
 
         this.mBitmapTextureAtlas = new BitmapTextureAtlas( this.getTextureManager(), mSpriteWidth, mSpriteWidth, TextureOptions.BILINEAR );
@@ -210,11 +210,11 @@ public class BallsGameActivity extends SimpleBaseGameActivity
         this.mBitmapTextureAtlas.load();
 
         this.mBitmapTextureAtlas = new BitmapTextureAtlas( this.getTextureManager(), mRoundButtonWidth, mRoundButtonWidth, TextureOptions.BILINEAR );
-        this.mRoundCompleteTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset( this.mBitmapTextureAtlas, this, "round-complete.png", 0, 0 );
+        this.mRoundCompleteTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset( this.mBitmapTextureAtlas, this, "round_complete.png", 0, 0 );
         this.mBitmapTextureAtlas.load();
 
         this.mAutoParallaxBackgroundTexture = new BitmapTextureAtlas( this.getTextureManager(), CAMERA_WIDTH, CAMERA_HEIGHT );
-        this.mParallaxLayerBack = BitmapTextureAtlasTextureRegionFactory.createFromAsset( this.mAutoParallaxBackgroundTexture, this, "pitch-bg.jpg", 0, 0 );
+        this.mParallaxLayerBack = BitmapTextureAtlasTextureRegionFactory.createFromAsset( this.mAutoParallaxBackgroundTexture, this, "pitch_bg.jpg", 0, 0 );
         this.mAutoParallaxBackgroundTexture.load();
     }
 
@@ -518,7 +518,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
 
                         textureRegion = mGoalkeeperBTextureRegion;
                     }
-                    
+
                     break;
 
                 default:

@@ -1,11 +1,10 @@
 package se.footballaddicts.strategicballs;
 
-import org.andengine.entity.Entity;
 import org.andengine.entity.sprite.Sprite;
 
 import android.graphics.Point;
 
-public class Player extends Entity
+public class Player extends BallsEntity
 {
     enum Position
     {
@@ -40,46 +39,21 @@ public class Player extends Entity
         A, B;
     }
 
-    private Point    currentCoordinates;
-    private Point    roundStartCoordinates;
-    private Position position;
     private Team     team;
-    private Sprite   sprite;
+    private Position position;
 
     public Player( Point coordinates, Position position, Team team )
     {
-        this.roundStartCoordinates = coordinates;
-        this.position = position;
+        super( coordinates );
+
         this.team = team;
-        this.sprite = null;
     }
 
     public Player( Point coordinates, Position position, Team team, Sprite sprite )
     {
-        this.roundStartCoordinates = coordinates;
-        this.position = position;
+        super( coordinates, sprite );
+
         this.team = team;
-        this.sprite = sprite;
-    }
-
-    public Position getPosition()
-    {
-        return position;
-    }
-
-    public void setPosition( Position position )
-    {
-        this.position = position;
-    }
-
-    public Point getCurrentCoordinates()
-    {
-        return currentCoordinates;
-    }
-
-    public void setCurrentCoordinates( Point coordinates )
-    {
-        this.currentCoordinates = coordinates;
     }
 
     public Team getTeam()
@@ -92,23 +66,13 @@ public class Player extends Entity
         this.team = team;
     }
 
-    public Sprite getSprite()
+    public Position getPosition()
     {
-        return sprite;
+        return position;
     }
 
-    public void setSprite( Sprite sprite )
+    public void setPosition( Position position )
     {
-        this.sprite = sprite;
-    }
-
-    public Point getRoundStartCoordinates()
-    {
-        return roundStartCoordinates;
-    }
-
-    public void setRoundStartCoordinates( Point roundStartCoordinates )
-    {
-        this.roundStartCoordinates = roundStartCoordinates;
+        this.position = position;
     }
 }

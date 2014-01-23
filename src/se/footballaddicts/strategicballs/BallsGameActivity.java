@@ -24,13 +24,9 @@ import org.andengine.entity.sprite.Sprite;
 import org.andengine.entity.text.Text;
 import org.andengine.entity.text.TextOptions;
 import org.andengine.entity.util.FPSLogger;
-import org.andengine.extension.multiplayer.protocol.adt.message.client.ClientMessage;
 import org.andengine.extension.multiplayer.protocol.client.connector.ServerConnector;
 import org.andengine.extension.multiplayer.protocol.client.connector.SocketConnectionServerConnector.ISocketConnectionServerConnectorListener;
-import org.andengine.extension.multiplayer.protocol.server.SocketServer;
-import org.andengine.extension.multiplayer.protocol.server.SocketServer.ISocketServerListener;
 import org.andengine.extension.multiplayer.protocol.server.connector.ClientConnector;
-import org.andengine.extension.multiplayer.protocol.server.connector.SocketConnectionClientConnector;
 import org.andengine.extension.multiplayer.protocol.server.connector.SocketConnectionClientConnector.ISocketConnectionClientConnectorListener;
 import org.andengine.extension.multiplayer.protocol.shared.SocketConnection;
 import org.andengine.extension.multiplayer.protocol.util.WifiUtils;
@@ -50,7 +46,6 @@ import org.andengine.opengl.texture.region.TiledTextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.ui.activity.SimpleBaseGameActivity;
 import org.andengine.util.HorizontalAlign;
-import org.andengine.util.color.Color;
 import org.andengine.util.debug.Debug;
 
 import se.footballaddicts.strategicballs.Player.Position;
@@ -118,7 +113,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
     private TextureRegion               mGoalLeftTextureRegion;
     private TextureRegion               mGoalRightTextureRegion;
     private TiledTextureRegion          mBallTextureRegion;
-    protected Player                    mLatestPlayer;
+    protected BallsEntity               mLatestEntity;
 
     private ArrayList<Player>           mPlayers                          = new ArrayList<Player>();
     private float                       centerX;
@@ -300,14 +295,15 @@ public class BallsGameActivity extends SimpleBaseGameActivity
         scene.attachChild( roundCompleteButton );
         scene.registerTouchArea( roundCompleteButton );
 
-        final Ball ball = new Ball( centerX, centerY, this.mBallTextureRegion, this.getVertexBufferObjectManager() );
-
-        scene.attachChild( ball );
-        scene.registerTouchArea( ball );
-
+        final Ball ball = new Ball( 5, 5, centerX, centerY, this.mBallTextureRegion, this.getVertexBufferObjectManager() );
+        
+        scene.registerTouchArea( ball.getSprite() );
+        
         // Add players
         addPlayers( Team.B, scene );
         addPlayers( Team.A, scene );
+
+        scene.attachChild( ball.getSprite() );
 
         scene.setTouchAreaBindingOnActionDownEnabled( true );
 
@@ -350,13 +346,13 @@ public class BallsGameActivity extends SimpleBaseGameActivity
                     scene.attachChild( leftText );
                 }
 
-                if( mLatestPlayer != null )
+                if( mLatestEntity != null )
                 {
                     for( Entity[] rectRow : mPitchMatrix )
                     {
                         for( Entity centerRectangle : rectRow )
                         {
-                            if( ((RectangularShape) centerRectangle).collidesWith( mLatestPlayer.getSprite() ) )
+                            if( ((RectangularShape) centerRectangle).collidesWith( mLatestEntity.getSprite() ) )
                             {
                                 mCollidingRectangle = (Cell) centerRectangle;
                                 centerRectangle.setColor( 1, 0, 1 );
@@ -371,13 +367,13 @@ public class BallsGameActivity extends SimpleBaseGameActivity
 
                     if( mLatestTouchEvent == TouchEvent.ACTION_UP && mCollidingRectangle != null )
                     {
-                        mLatestPlayer.getSprite().setScale( 1.0f );
+                        mLatestEntity.getSprite().setScale( 1.0f );
 
                         // SNAP
-                        mLatestPlayer.getSprite().setX( mCollidingRectangle.getX() );
-                        mLatestPlayer.getSprite().setY( mCollidingRectangle.getY() );
+                        mLatestEntity.getSprite().setX( mCollidingRectangle.getX() );
+                        mLatestEntity.getSprite().setY( mCollidingRectangle.getY() );
 
-                        mLatestPlayer.setCurrentCoordinates( mCollidingRectangle.getCoordinates() );
+                        mLatestEntity.setCurrentCoordinates( mCollidingRectangle.getCoordinates() );
                     }
                 }
 
@@ -654,7 +650,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
                     this.setPosition( getProperX( xPosition ), getProperY( yPosition ) );
 
                     mLatestTouchEvent = pSceneTouchEvent.getAction();
-                    mLatestPlayer = player;
+                    mLatestEntity = player;
 
                     this.setScale( 1.5f );
 
@@ -714,29 +710,52 @@ public class BallsGameActivity extends SimpleBaseGameActivity
         return xPosition;
     }
 
-    private static class Ball extends AnimatedSprite
+    private class Ball extends BallsEntity
     {
         protected final PhysicsHandler mPhysicsHandler;
+        private AnimatedSprite         animatedSprite;
 
-        public Ball( final float pX, final float pY, final TiledTextureRegion pTextureRegion, final VertexBufferObjectManager pVertexBufferObjectManager )
+        public Ball( int logicalX, int logicalY, float pX, float pY, final TiledTextureRegion pTextureRegion, final VertexBufferObjectManager pVertexBufferObjectManager )
         {
-            super( pX, pY, pTextureRegion, pVertexBufferObjectManager );
+            super( new Point( logicalX, logicalY ) );
+
+            setSprite( new AnimatedSprite( pX, pY, pTextureRegion, pVertexBufferObjectManager )
+            {
+                @Override
+                public boolean onAreaTouched( TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY )
+                {
+                    float xPosition = pSceneTouchEvent.getX() - this.getWidth() / 2;
+                    float yPosition = pSceneTouchEvent.getY() - this.getHeight() / 2;
+
+                    this.setPosition( getProperX( xPosition ), getProperY( yPosition ) );
+
+                    mLatestTouchEvent = pSceneTouchEvent.getAction();
+                    mLatestEntity = Ball.this;
+
+                    this.setScale( 1.5f );
+
+                    return true;
+                }
+            } );
+
             this.mPhysicsHandler = new PhysicsHandler( this );
             this.registerUpdateHandler( this.mPhysicsHandler );
-            this.mPhysicsHandler.setVelocity( BALL_VELOCITY, 0 );
+            // this.mPhysicsHandler.setVelocity( BALL_VELOCITY, 0 );
         }
 
         @Override
         protected void onManagedUpdate( final float pSecondsElapsed )
         {
-            if( this.mX < 0 )
-            {
-                this.mPhysicsHandler.setVelocityX( BALL_VELOCITY );
-            }
-            else if( this.mX + this.getWidth() > CAMERA_WIDTH )
-            {
-                this.mPhysicsHandler.setVelocityX( -BALL_VELOCITY );
-            }
+            super.onManagedUpdate( pSecondsElapsed );
+
+            // if( this.mX < 0 )
+            // {
+            // this.mPhysicsHandler.setVelocityX( BALL_VELOCITY );
+            // }
+            // else if( this.mX + this.getWidth() > CAMERA_WIDTH )
+            // {
+            // this.mPhysicsHandler.setVelocityX( -BALL_VELOCITY );
+            // }
 
             /*
              * if( this.mY < 0 ) { this.mPhysicsHandler.setVelocityY(
@@ -745,18 +764,8 @@ public class BallsGameActivity extends SimpleBaseGameActivity
              * -BALL_VELOCITY ); }
              */
 
-            super.onManagedUpdate( pSecondsElapsed );
         }
 
-        @Override
-        public boolean onAreaTouched( TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY )
-        {
-            Log.d( "balltouch", "!" );
-
-            this.mPhysicsHandler.setVelocity( -this.mPhysicsHandler.getVelocityX(), 0 );
-
-            return super.onAreaTouched( pSceneTouchEvent, pTouchAreaLocalX, pTouchAreaLocalY );
-        }
     }
 
     private void toast( final String pMessage )

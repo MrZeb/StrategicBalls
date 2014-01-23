@@ -152,6 +152,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
     private boolean                     hasShownServerDialog              = false;
     
     private boolean                     isWaiting = false;
+    private Set<Move>                   storedMoves;
 
     @Override
     public EngineOptions onCreateEngineOptions()
@@ -464,23 +465,35 @@ public class BallsGameActivity extends SimpleBaseGameActivity
             setCurrentTeam( TeamType.LEFT );
         }
 
+        Set<Move> moves = getMovesForRound();
+        
         try
         {
-            BallsGameActivity.this.mServerConnector.sendClientMessage( new EndRoundClientMessage( BallsGameActivity.this.mUserID, getMovesForRound() ) );
+            BallsGameActivity.this.mServerConnector.sendClientMessage( new EndRoundClientMessage( BallsGameActivity.this.mUserID, moves ) );
         }
         catch( final IOException e )
         {
             Debug.e( e );
         }
 
-        runOnUiThread( new Runnable()
+        if ( storedMoves != null )
         {
-            @Override
-            public void run()
+            updateEntityPositions( storedMoves );
+            storedMoves = null;
+        }
+        else
+        {
+            isWaiting = true;
+            runOnUiThread( new Runnable()
             {
-                waitForOtherUserMessage = ProgressDialog.show( BallsGameActivity.this, null, "Waiting for the other player to end its turn", true );
-            }
-        } );
+                @Override
+                public void run()
+                {
+                    waitForOtherUserMessage = ProgressDialog.show( BallsGameActivity.this, null,
+                            "Waiting for the other player to end its turn", true );
+                }
+            } );
+        }
     }
 
     private void setCurrentTeam( TeamType team )
@@ -641,11 +654,20 @@ public class BallsGameActivity extends SimpleBaseGameActivity
 
             if( pMessage instanceof EndRoundServerMessage )
             {
-                updateEntityPositions( ((EndRoundServerMessage) pMessage).getMoves() );
-
-                if( waitForOtherUserMessage != null )
+                if ( isWaiting )
                 {
-                    waitForOtherUserMessage.dismiss();
+                    updateEntityPositions( ((EndRoundServerMessage) pMessage).getMoves() );
+                    
+                    isWaiting = false;
+                    
+                    if( waitForOtherUserMessage != null )
+                    {
+                        waitForOtherUserMessage.dismiss();
+                    }
+                }
+                else
+                {
+                    storedMoves = ((EndRoundServerMessage) pMessage).getMoves();
                 }
             }
             else if ( pMessage instanceof SetUserIDServerMessage )

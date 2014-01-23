@@ -5,7 +5,9 @@ import java.io.IOException;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Currency;
 import java.util.HashSet;
+import java.util.Random;
 import java.util.Set;
 
 import org.andengine.engine.camera.Camera;
@@ -295,10 +297,26 @@ public class BallsGameActivity extends SimpleBaseGameActivity
         scene.attachChild( roundCompleteButton );
         scene.registerTouchArea( roundCompleteButton );
 
-        final Ball ball = new Ball( 5, 5, centerX, centerY, this.mBallTextureRegion, this.getVertexBufferObjectManager() );
-        
+        coinTossForBall();
+
+        int logicalBallX, logicalBallY = 5;
+        float realBallX, realBallY = 50f;
+
+        if( mCurrentTeam == Team.A )
+        {
+            logicalBallX = 5;
+            realBallX = 123f;
+        }
+        else
+        {
+            logicalBallX = 6;
+            realBallX = 123f;
+        }
+
+        final Ball ball = new Ball( logicalBallX, logicalBallY, realBallX, realBallY, this.mBallTextureRegion, this.getVertexBufferObjectManager() );
+
         scene.registerTouchArea( ball.getSprite() );
-        
+
         // Add players
         addPlayers( Team.B, scene );
         addPlayers( Team.A, scene );
@@ -385,6 +403,18 @@ public class BallsGameActivity extends SimpleBaseGameActivity
         } );
 
         return scene;
+    }
+
+    private void coinTossForBall()
+    {
+        if( new Random().nextInt( 2 ) == 1 )
+        {
+            mCurrentTeam = Team.A;
+        }
+        else
+        {
+            mCurrentTeam = Team.B;
+        }
     }
 
     protected void endRound()
@@ -532,25 +562,22 @@ public class BallsGameActivity extends SimpleBaseGameActivity
 
             ITextureRegion textureRegion = null;
 
-            int logicalX = 0;
-            int logicalY = 0;
+            Point logicalCoordinates = new Point();
 
             switch( position )
             {
-
                 case ATTACKER:
+
+                    logicalCoordinates = position.getLogicalCoordinates( team, mPitchMatrix[0].length, i );
 
                     if( team == Team.A )
                     {
-                        logicalX = 5;
                         xPosition = mPitchMatrix[5][3].getX();
 
                         textureRegion = mAttackerATextureRegion;
                     }
                     else
                     {
-                        logicalX = mPitchMatrix[5].length - 5;
-
                         xPosition = mPitchMatrix[mPitchMatrix[5].length - 5][3].getX();
 
                         textureRegion = mAttackerBTextureRegion;
@@ -559,15 +586,12 @@ public class BallsGameActivity extends SimpleBaseGameActivity
                     switch( i )
                     {
                         case 3:
-                            logicalY = 2;
                             yPosition = mPitchMatrix[3][2].getY();
                             break;
                         case 4:
-                            logicalY = 5;
                             yPosition = mPitchMatrix[3][5].getY();
                             break;
                         case 5:
-                            logicalY = 8;
                             yPosition = mPitchMatrix[3][8].getY();
                             break;
                     }
@@ -576,32 +600,21 @@ public class BallsGameActivity extends SimpleBaseGameActivity
 
                 case DEFENDER:
 
-                    if( i == 1 )
-                    {
-                        logicalY = 3;
-                    }
-                    else
-                    {
-                        logicalY = 7;
-                    }
+                    logicalCoordinates = position.getLogicalCoordinates( team, mPitchMatrix[0].length, i );
 
                     if( team == Team.A )
                     {
-                        logicalX = 3;
+                        xPosition = mPitchMatrix[logicalCoordinates.x][0].getX();
 
-                        xPosition = mPitchMatrix[logicalX][logicalY].getX();
-
-                        yPosition = mPitchMatrix[logicalX][logicalY].getY();
+                        yPosition = mPitchMatrix[0][logicalCoordinates.y].getY();
 
                         textureRegion = mDefenderATextureRegion;
                     }
                     else
                     {
-                        logicalX = mPitchMatrix[5].length - 3;
+                        xPosition = mPitchMatrix[logicalCoordinates.x][0].getX();
 
-                        xPosition = mPitchMatrix[logicalX][logicalY].getX();
-
-                        yPosition = mPitchMatrix[logicalX][logicalY].getY();
+                        yPosition = mPitchMatrix[0][logicalCoordinates.y].getY();
 
                         textureRegion = mDefenderBTextureRegion;
                     }
@@ -610,23 +623,19 @@ public class BallsGameActivity extends SimpleBaseGameActivity
 
                 case GOALKEEPER:
 
-                    logicalY = 5;
+                    logicalCoordinates = position.getLogicalCoordinates( team, mPitchMatrix[0].length, i );
 
                     if( team == Team.A )
                     {
-                        logicalX = 0;
-
-                        xPosition = mPitchMatrix[logicalX][logicalY].getX();
-                        yPosition = mPitchMatrix[logicalX][logicalY].getY();
+                        xPosition = mPitchMatrix[logicalCoordinates.x][0].getX();
+                        yPosition = mPitchMatrix[0][logicalCoordinates.y].getY();
 
                         textureRegion = mGoalkeeperATextureRegion;
                     }
                     else
                     {
-                        logicalX = mPitchMatrix[0].length;
-
-                        xPosition = mPitchMatrix[logicalX][logicalY].getX();
-                        yPosition = mPitchMatrix[logicalX][logicalY].getY();
+                        xPosition = mPitchMatrix[logicalCoordinates.x][0].getX();
+                        yPosition = mPitchMatrix[0][logicalCoordinates.y].getY();
 
                         textureRegion = mGoalkeeperBTextureRegion;
                     }
@@ -637,7 +646,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
                     break;
             }
 
-            final Player player = new Player( new Point( logicalX, logicalY ), position, team );
+            final Player player = new Player( logicalCoordinates, position, team );
 
             Sprite sprite = new Sprite( xPosition, yPosition, textureRegion, this.getVertexBufferObjectManager() )
             {

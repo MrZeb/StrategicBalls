@@ -32,6 +32,50 @@ public class Player extends BallsEntity
                 return ATTACKER;
             }
         }
+
+        public Point getLogicalCoordinates( Team team, int pitchLength, int index )
+        {
+            /* index is internal index for each position */
+
+            int xBase = team == Team.A ? 0 : pitchLength;
+            int factor = team == Team.A ? 1 : -1;
+
+            switch( this )
+            {
+                case ATTACKER:
+                    if( index == 3 )
+                    {
+                        return new Point( 5 * factor + xBase, 2 );
+                    }
+                    else if( index == 4 )
+                    {
+                        return new Point( 5 * factor + xBase, 5 );
+                    }
+                    else
+                    {
+                        return new Point( 5 * factor + xBase, 8 );
+                    }
+
+                case DEFENDER:
+                    if( index == 1 )
+                    {
+                        return new Point( 3 * factor + xBase, 3 );
+                    }
+                    else if( index == 2 )
+                    {
+                        return new Point( 3 * factor + xBase, 7 );
+                    }
+
+                case GOALKEEPER:
+
+                    if( index == 0 )
+                    {
+                        return new Point( xBase, 5 );
+                    }
+                default:
+                    return null;
+            }
+        }
     }
 
     enum Team

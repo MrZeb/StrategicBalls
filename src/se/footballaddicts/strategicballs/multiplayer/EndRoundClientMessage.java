@@ -12,12 +12,13 @@ import se.footballaddicts.strategicballs.Player.PlayerType;
 import se.footballaddicts.strategicballs.Player.TeamType;
 import se.footballaddicts.strategicballs.multiplayer.Move.MoveType;
 import android.graphics.Point;
+import android.util.Log;
 
 public class EndRoundClientMessage extends ClientMessage
 {
     public static final short FLAG_END_ROUND_MESSAGE = 1;
 
-    private Integer            mUserID;
+    private Integer           mUserID;
     private Set<Move>         mMoves;
 
     public EndRoundClientMessage()
@@ -40,7 +41,7 @@ public class EndRoundClientMessage extends ClientMessage
     protected void onReadTransmissionData( DataInputStream pDataInputStream ) throws IOException
     {
         mUserID = pDataInputStream.readInt();
-        
+
         int size = pDataInputStream.readInt();
 
         this.mMoves = new HashSet<Move>( size );
@@ -63,13 +64,15 @@ public class EndRoundClientMessage extends ClientMessage
     protected void onWriteTransmissionData( DataOutputStream pDataOutputStream ) throws IOException
     {
         pDataOutputStream.writeInt( mUserID );
-        
+
         pDataOutputStream.writeInt( mMoves.size() );
 
         for( Move move : mMoves )
         {
+            Log.d( "write", move.getType() + "" );
+
             pDataOutputStream.writeInt( move.getType().id );
-            
+
             if( move.getTeam() != null )
             {
                 pDataOutputStream.writeInt( move.getTeam().ordinal() );
@@ -86,7 +89,7 @@ public class EndRoundClientMessage extends ClientMessage
             {
                 pDataOutputStream.writeInt( 0 );
             }
-            
+
             pDataOutputStream.writeInt( move.getFrom().x );
             pDataOutputStream.writeInt( move.getFrom().y );
             pDataOutputStream.writeInt( move.getTo().x );

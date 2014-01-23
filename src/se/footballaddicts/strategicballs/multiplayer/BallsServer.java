@@ -1,8 +1,6 @@
 package se.footballaddicts.strategicballs.multiplayer;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
 
 import org.andengine.engine.handler.IUpdateHandler;
 import org.andengine.extension.multiplayer.protocol.adt.message.IMessage;
@@ -18,6 +16,7 @@ import org.andengine.extension.multiplayer.protocol.util.MessagePool;
 import org.andengine.util.debug.Debug;
 
 import se.footballaddicts.strategicballs.BallsConstants;
+import se.footballaddicts.strategicballs.Player.TeamType;
 import se.footballaddicts.strategicballs.multiplayer.client.ClientMessageFlags;
 import se.footballaddicts.strategicballs.multiplayer.client.ConnectionCloseClientMessage;
 import se.footballaddicts.strategicballs.multiplayer.client.ConnectionEstablishClientMessage;
@@ -26,6 +25,7 @@ import se.footballaddicts.strategicballs.multiplayer.server.ConnectionEstablishe
 import se.footballaddicts.strategicballs.multiplayer.server.ConnectionPongServerMessage;
 import se.footballaddicts.strategicballs.multiplayer.server.ConnectionRejectedProtocolMissmatchServerMessage;
 import se.footballaddicts.strategicballs.multiplayer.server.ServerMessageFlags;
+import android.util.Log;
 
 import com.badlogic.gdx.physics.box2d.Contact;
 import com.badlogic.gdx.physics.box2d.ContactImpulse;
@@ -35,7 +35,6 @@ import com.badlogic.gdx.physics.box2d.Manifold;
 public class BallsServer extends SocketServer<SocketConnectionClientConnector> implements BallsConstants, ServerMessageFlags, ClientMessageFlags, IUpdateHandler, ContactListener
 {
     private final MessagePool<IMessage> mMessagePool = new MessagePool<IMessage>();
-    private final Collection<SocketConnectionClientConnector> clients = new ArrayList<SocketConnectionClientConnector>();
 
     public BallsServer( final ISocketConnectionClientConnectorListener pSocketConnectionClientConnectorListener )
     {
@@ -54,7 +53,7 @@ public class BallsServer extends SocketServer<SocketConnectionClientConnector> i
                     public void onHandleMessage( ClientConnector<SocketConnection> pClientConnector, IClientMessage pClientMessage )
                             throws IOException
                     {
-                        for ( SocketConnectionClientConnector client : clients )
+                        for ( SocketConnectionClientConnector client : mClientConnectors )
                         {
                             if ( !client.equals( clientConnector ) )
                             {
@@ -71,7 +70,6 @@ public class BallsServer extends SocketServer<SocketConnectionClientConnector> i
                     public void onHandleMessage( final ClientConnector<SocketConnection> pClientConnector,
                             final IClientMessage pClientMessage ) throws IOException
                     {
-                        clients.remove( clientConnector );
                         pClientConnector.terminate();
                     }
                 } );
@@ -139,8 +137,9 @@ public class BallsServer extends SocketServer<SocketConnectionClientConnector> i
                         BallsServer.this.mMessagePool.recycleMessage( connectionPongServerMessage );
                     }
                 } );
-        clients.add( clientConnector );
-        clientConnector.sendServerMessage( new SetUserIDServerMessage( this.mClientConnectors.size() ) ); // TODO
+        
+        Log.d("We are sending user id message", "size=" + this.mClientConnectors.size());
+        clientConnector.sendServerMessage( new SetUserIDServerMessage( this.mClientConnectors.size(), this.mClientConnectors.size() > 0 ? TeamType.RIGHT : TeamType.LEFT ) ); // TODO
                                                                                                           // should
                                                                                                           // not
                                                                                                           // be

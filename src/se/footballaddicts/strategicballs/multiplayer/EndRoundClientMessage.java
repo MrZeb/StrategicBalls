@@ -17,14 +17,14 @@ public class EndRoundClientMessage extends ClientMessage
 {
     public static final short FLAG_END_ROUND_MESSAGE = 1;
 
-    private Object            mUserID;
+    private Integer            mUserID;
     private Set<Move>         mMoves;
 
     public EndRoundClientMessage()
     {
     }
 
-    public EndRoundClientMessage( Object userID, Set<Move> moves )
+    public EndRoundClientMessage( Integer userID, Set<Move> moves )
     {
         this.setmUserID( userID );
         this.setMoves( moves );
@@ -39,6 +39,8 @@ public class EndRoundClientMessage extends ClientMessage
     @Override
     protected void onReadTransmissionData( DataInputStream pDataInputStream ) throws IOException
     {
+        mUserID = pDataInputStream.readInt();
+        
         int size = pDataInputStream.readInt();
 
         this.mMoves = new HashSet<Move>( size );
@@ -60,6 +62,8 @@ public class EndRoundClientMessage extends ClientMessage
     @Override
     protected void onWriteTransmissionData( DataOutputStream pDataOutputStream ) throws IOException
     {
+        pDataOutputStream.writeInt( mUserID );
+        
         pDataOutputStream.writeInt( mMoves.size() );
 
         for( Move move : mMoves )
@@ -90,14 +94,14 @@ public class EndRoundClientMessage extends ClientMessage
         }
     }
 
-    public Object getmUserID()
+    public Integer getmUserID()
     {
         return mUserID;
     }
 
-    public void setmUserID( Object mUserID )
+    public void setmUserID( Integer pUserID )
     {
-        this.mUserID = mUserID;
+        this.mUserID = pUserID;
     }
 
     public Set<Move> getMoves()

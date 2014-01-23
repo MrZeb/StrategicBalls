@@ -47,8 +47,8 @@ public class Player extends BallsEntity
 
         public Point getLogicalCoordinates( TeamType team, int pitchLength )
         {
-            int xBase = team == TeamType.A ? 0 : pitchLength;
-            int factor = team == TeamType.A ? 1 : -1;
+            int xBase = team == TeamType.LEFT ? 0 : pitchLength;
+            int factor = team == TeamType.LEFT ? 1 : -1;
 
             switch( this )
             {
@@ -99,7 +99,19 @@ public class Player extends BallsEntity
 
     public enum TeamType
     {
-        A, B;
+        LEFT, RIGHT;
+        
+        public static TeamType fromServer( int ordinal )
+        {
+            for ( TeamType type : TeamType.values() )
+            {
+                if ( type.ordinal() == ordinal )
+                {
+                    return type;
+                }
+            }
+            return null;
+        }
     }
 
     private TeamType       team;

@@ -7,6 +7,7 @@ import java.io.IOException;
 import org.andengine.extension.multiplayer.protocol.adt.message.server.ServerMessage;
 
 import se.footballaddicts.strategicballs.BallsConstants;
+import se.footballaddicts.strategicballs.Player.TeamType;
 
 /**
  * (c) 2010 Nicolas Gramlich (c) 2011 Zynga Inc.
@@ -27,6 +28,7 @@ public class SetUserIDServerMessage extends ServerMessage implements BallsConsta
     // ===========================================================
 
     public int mUserID;
+    public TeamType team;
 
     // ===========================================================
     // Constructors
@@ -37,9 +39,10 @@ public class SetUserIDServerMessage extends ServerMessage implements BallsConsta
 
     }
 
-    public SetUserIDServerMessage( final int pUserID )
+    public SetUserIDServerMessage( final int pUserID, final TeamType team )
     {
         this.mUserID = pUserID;
+        this.team = team;
     }
 
     // ===========================================================
@@ -65,12 +68,14 @@ public class SetUserIDServerMessage extends ServerMessage implements BallsConsta
     protected void onReadTransmissionData( DataInputStream pDataInputStream ) throws IOException
     {
         this.mUserID = pDataInputStream.readInt();
+        this.team = TeamType.fromServer( pDataInputStream.readInt() );
     }
 
     @Override
     protected void onWriteTransmissionData( final DataOutputStream pDataOutputStream ) throws IOException
     {
         pDataOutputStream.writeInt( this.mUserID );
+        pDataOutputStream.writeInt( team.ordinal() );
     }
 
     // ===========================================================

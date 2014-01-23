@@ -126,7 +126,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
     private BallsServer                 mServer;
     private BallsServerConnector        mServerConnector;
     private String                      mServerIP;
-    protected Object                    mUserID;
+    protected Integer                   mUserID;
     private TiledTextureRegion          mRoundActiveTextureRegion;
     private TextureRegion               mRoundCompleteTextureRegion;
     private Sprite                      roundActiveButton;
@@ -138,6 +138,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
     private TextureRegion               mAttackerBTextureRegion;
     private TextureRegion               mGoalkeeperATextureRegion;
     private TextureRegion               mGoalkeeperBTextureRegion;
+    private TeamType                    mTeam;
 
     private TeamType                    mCurrentTeam;
 
@@ -149,7 +150,10 @@ public class BallsGameActivity extends SimpleBaseGameActivity
     private Toast                       currentToast;
     private Ball                        mBall;
     private boolean                     hasShownServerDialog              = false;
+
     private AlertDialog                 mWaitingForConnectionDialog;
+
+    private boolean                     isWaiting                         = false;
 
     @Override
     public EngineOptions onCreateEngineOptions()
@@ -335,8 +339,8 @@ public class BallsGameActivity extends SimpleBaseGameActivity
         scene.registerTouchArea( mBall.getSprite() );
 
         // Add players
-        addPlayers( TeamType.B, scene );
-        addPlayers( TeamType.A, scene );
+        addPlayers( TeamType.RIGHT, scene );
+        addPlayers( TeamType.LEFT, scene );
 
         // updateEntityPositions( getMovesForRound() );
 
@@ -344,7 +348,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
 
         mBall.getSprite().setY( mPitchMatrix[5][5].getY() );
 
-        if( mCurrentTeam == TeamType.A )
+        if( mCurrentTeam == TeamType.LEFT )
         {
             mBall.setRoundStartCoordinates( new Point( 5, 5 ) );
             mBall.getSprite().setX( mPitchMatrix[5][5].getX() );
@@ -443,23 +447,23 @@ public class BallsGameActivity extends SimpleBaseGameActivity
     {
         if( new Random().nextInt( 2 ) == 1 )
         {
-            setCurrentTeam( TeamType.A );
+            setCurrentTeam( TeamType.LEFT );
         }
         else
         {
-            setCurrentTeam( TeamType.B );
+            setCurrentTeam( TeamType.RIGHT );
         }
     }
 
     protected void endRound()
     {
-        if( mCurrentTeam == TeamType.A )
+        if( mCurrentTeam == TeamType.LEFT )
         {
-            setCurrentTeam( TeamType.B );
+            setCurrentTeam( TeamType.RIGHT );
         }
         else
         {
-            setCurrentTeam( TeamType.A );
+            setCurrentTeam( TeamType.LEFT );
         }
 
         try
@@ -653,6 +657,11 @@ public class BallsGameActivity extends SimpleBaseGameActivity
                     waitForOtherUserMessage.dismiss();
                 }
             }
+            else if( pMessage instanceof SetUserIDServerMessage )
+            {
+                mUserID = ((SetUserIDServerMessage) pMessage).mUserID;
+                mTeam = ((SetUserIDServerMessage) pMessage).team;
+            }
         }
     }
 
@@ -693,7 +702,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
 
                     logicalCoordinates = type.getLogicalCoordinates( team, mPitchMatrix[0].length );
 
-                    if( team == TeamType.A )
+                    if( team == TeamType.LEFT )
                     {
                         xPosition = mPitchMatrix[5][3].getX();
 
@@ -725,7 +734,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
 
                     logicalCoordinates = type.getLogicalCoordinates( team, mPitchMatrix[0].length );
 
-                    if( team == TeamType.A )
+                    if( team == TeamType.LEFT )
                     {
                         xPosition = mPitchMatrix[logicalCoordinates.x][0].getX();
 
@@ -748,7 +757,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
 
                     logicalCoordinates = type.getLogicalCoordinates( team, mPitchMatrix[0].length );
 
-                    if( team == TeamType.A )
+                    if( team == TeamType.LEFT )
                     {
                         xPosition = mPitchMatrix[logicalCoordinates.x][0].getX();
                         yPosition = mPitchMatrix[0][logicalCoordinates.y].getY();
@@ -776,15 +785,18 @@ public class BallsGameActivity extends SimpleBaseGameActivity
                 @Override
                 public boolean onAreaTouched( final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY )
                 {
-                    float xPosition = pSceneTouchEvent.getX() - this.getWidth() / 2;
-                    float yPosition = pSceneTouchEvent.getY() - this.getHeight() / 2;
+                    if( mTeam == player.getTeam() )
+                    {
+                        float xPosition = pSceneTouchEvent.getX() - this.getWidth() / 2;
+                        float yPosition = pSceneTouchEvent.getY() - this.getHeight() / 2;
 
-                    this.setPosition( getProperX( xPosition ), getProperY( yPosition ) );
+                        this.setPosition( getProperX( xPosition ), getProperY( yPosition ) );
 
-                    mDropSelection = pSceneTouchEvent.getAction() == TouchEvent.ACTION_UP;
-                    mSelectedEntity = player;
+                        mDropSelection = pSceneTouchEvent.getAction() == TouchEvent.ACTION_UP;
+                        mSelectedEntity = player;
 
-                    this.setScale( 1.5f );
+                        this.setScale( 1.5f );
+                    }
 
                     return true;
                 }
@@ -878,7 +890,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
                                 @Override
                                 public void onClick( final DialogInterface pDialog, final int pWhich )
                                 {
-                                    
+
                                 }
                             } ).create();
 

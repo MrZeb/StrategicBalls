@@ -5,14 +5,12 @@ import java.io.IOException;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.Currency;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
 
 import org.andengine.engine.camera.Camera;
 import org.andengine.engine.handler.IUpdateHandler;
-import org.andengine.engine.handler.physics.PhysicsHandler;
 import org.andengine.engine.options.EngineOptions;
 import org.andengine.engine.options.ScreenOrientation;
 import org.andengine.engine.options.resolutionpolicy.RatioResolutionPolicy;
@@ -50,6 +48,7 @@ import org.andengine.ui.activity.SimpleBaseGameActivity;
 import org.andengine.util.HorizontalAlign;
 import org.andengine.util.debug.Debug;
 
+import se.footballaddicts.strategicballs.Player.GeneralPlayerType;
 import se.footballaddicts.strategicballs.Player.PlayerType;
 import se.footballaddicts.strategicballs.Player.Team;
 import se.footballaddicts.strategicballs.multiplayer.BallsServer;
@@ -141,6 +140,8 @@ public class BallsGameActivity extends SimpleBaseGameActivity
     private Entity[][]                  mPitchMatrix;
     protected boolean                   isServer;
     private Font                        mFont;
+
+    private Toast                       currentToast;
 
     @Override
     public EngineOptions onCreateEngineOptions()
@@ -313,8 +314,26 @@ public class BallsGameActivity extends SimpleBaseGameActivity
             realBallX = 123f;
         }
 
-        final Ball ball = new Ball( logicalBallX, logicalBallY, realBallX, realBallY, this.mBallTextureRegion, this.getVertexBufferObjectManager() );
+        final Ball ball = new Ball( logicalBallX, logicalBallY );
 
+        ball.setSprite( new AnimatedSprite( realBallX, realBallY, this.mBallTextureRegion, this.getVertexBufferObjectManager() )
+        {
+            @Override
+            public boolean onAreaTouched( TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY )
+            {
+                float xPosition = pSceneTouchEvent.getX() - this.getWidth() / 2;
+                float yPosition = pSceneTouchEvent.getY() - this.getHeight() / 2;
+
+                this.setPosition( getProperX( xPosition ), getProperY( yPosition ) );
+
+                mLatestTouchEvent = pSceneTouchEvent.getAction();
+                mLatestEntity = ball;
+
+                this.setScale( 1.5f );
+
+                return true;
+            }
+        } );
         scene.registerTouchArea( ball.getSprite() );
 
         // Add players
@@ -452,12 +471,20 @@ public class BallsGameActivity extends SimpleBaseGameActivity
                 player.setCurrentCoordinates( player.getRoundStartCoordinates() );
             }
 
-            moves.add( new Move( MoveType.PLAYER, player.getRoundStartCoordinates(), player.getCurrentCoordinates() ) );
-            Log.d( "playermoves", player.getPosition() + " start: " + player.getRoundStartCoordinates() + " current: " + player.getCurrentCoordinates() );
+            moves.add( new Move( MoveType.PLAYER, player.getType(), player.getRoundStartCoordinates(), player.getCurrentCoordinates() ) );
+            Log.d( "playermoves", player.getType() + " start: " + player.getRoundStartCoordinates() + " current: " + player.getCurrentCoordinates() );
             player.setRoundStartCoordinates( player.getCurrentCoordinates() );
         }
 
         return moves;
+    }
+
+    private void setOpponentPlayerPositions( Set<Move> moves )
+    {
+        for( Move move : moves )
+        {
+
+        }
     }
 
     private void initServerAndClient()
@@ -547,7 +574,6 @@ public class BallsGameActivity extends SimpleBaseGameActivity
         public void read( DataInputStream pDataInputStream ) throws IOException
         {
             super.read( pDataInputStream );
-
         }
     }
 
@@ -555,7 +581,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
     {
         for( int i = 0; i < 6; i++ )
         {
-            PlayerType position = PlayerType.getPositionForIndex( i );
+            PlayerType type = PlayerType.getTypeForIndex( i );
 
             float xPosition = 0;
             float yPosition = 0;
@@ -564,11 +590,13 @@ public class BallsGameActivity extends SimpleBaseGameActivity
 
             Point logicalCoordinates = new Point();
 
-            switch( position )
+            GeneralPlayerType generalType = type.getGeneralType();
+
+            switch( generalType )
             {
                 case ATTACKER:
 
-                    logicalCoordinates = position.getLogicalCoordinates( team, mPitchMatrix[0].length, i );
+                    logicalCoordinates = type.getLogicalCoordinates( team, mPitchMatrix[0].length );
 
                     if( team == Team.A )
                     {
@@ -600,7 +628,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
 
                 case DEFENDER:
 
-                    logicalCoordinates = position.getLogicalCoordinates( team, mPitchMatrix[0].length, i );
+                    logicalCoordinates = type.getLogicalCoordinates( team, mPitchMatrix[0].length );
 
                     if( team == Team.A )
                     {
@@ -623,7 +651,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
 
                 case GOALKEEPER:
 
-                    logicalCoordinates = position.getLogicalCoordinates( team, mPitchMatrix[0].length, i );
+                    logicalCoordinates = type.getLogicalCoordinates( team, mPitchMatrix[0].length );
 
                     if( team == Team.A )
                     {
@@ -646,7 +674,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
                     break;
             }
 
-            final Player player = new Player( logicalCoordinates, position, team );
+            final Player player = new Player( logicalCoordinates, type, team );
 
             Sprite sprite = new Sprite( xPosition, yPosition, textureRegion, this.getVertexBufferObjectManager() )
             {
@@ -719,72 +747,24 @@ public class BallsGameActivity extends SimpleBaseGameActivity
         return xPosition;
     }
 
-    private class Ball extends BallsEntity
-    {
-        protected final PhysicsHandler mPhysicsHandler;
-        private AnimatedSprite         animatedSprite;
-
-        public Ball( int logicalX, int logicalY, float pX, float pY, final TiledTextureRegion pTextureRegion, final VertexBufferObjectManager pVertexBufferObjectManager )
-        {
-            super( new Point( logicalX, logicalY ) );
-
-            setSprite( new AnimatedSprite( pX, pY, pTextureRegion, pVertexBufferObjectManager )
-            {
-                @Override
-                public boolean onAreaTouched( TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY )
-                {
-                    float xPosition = pSceneTouchEvent.getX() - this.getWidth() / 2;
-                    float yPosition = pSceneTouchEvent.getY() - this.getHeight() / 2;
-
-                    this.setPosition( getProperX( xPosition ), getProperY( yPosition ) );
-
-                    mLatestTouchEvent = pSceneTouchEvent.getAction();
-                    mLatestEntity = Ball.this;
-
-                    this.setScale( 1.5f );
-
-                    return true;
-                }
-            } );
-
-            this.mPhysicsHandler = new PhysicsHandler( this );
-            this.registerUpdateHandler( this.mPhysicsHandler );
-            // this.mPhysicsHandler.setVelocity( BALL_VELOCITY, 0 );
-        }
-
-        @Override
-        protected void onManagedUpdate( final float pSecondsElapsed )
-        {
-            super.onManagedUpdate( pSecondsElapsed );
-
-            // if( this.mX < 0 )
-            // {
-            // this.mPhysicsHandler.setVelocityX( BALL_VELOCITY );
-            // }
-            // else if( this.mX + this.getWidth() > CAMERA_WIDTH )
-            // {
-            // this.mPhysicsHandler.setVelocityX( -BALL_VELOCITY );
-            // }
-
-            /*
-             * if( this.mY < 0 ) { this.mPhysicsHandler.setVelocityY(
-             * BALL_VELOCITY ); } else if( this.mY + this.getHeight() >
-             * CAMERA_HEIGHT ) { this.mPhysicsHandler.setVelocityY(
-             * -BALL_VELOCITY ); }
-             */
-
-        }
-
-    }
-
     private void toast( final String pMessage )
     {
         this.runOnUiThread( new Runnable()
         {
+
             @Override
             public void run()
             {
-                Toast.makeText( BallsGameActivity.this, pMessage, Toast.LENGTH_SHORT ).show();
+                if( currentToast == null )
+                {
+                    currentToast = Toast.makeText( BallsGameActivity.this, pMessage, Toast.LENGTH_SHORT );
+                }
+                else
+                {
+                    currentToast.setText( pMessage );
+                }
+
+                currentToast.show();
             }
         } );
     }

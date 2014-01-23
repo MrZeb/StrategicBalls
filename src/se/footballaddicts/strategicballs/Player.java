@@ -6,75 +6,94 @@ import android.graphics.Point;
 
 public class Player extends BallsEntity
 {
-    enum PlayerType
+    enum GeneralPlayerType
     {
-        GOALKEEPER( 1 ), DEFENDER( 1 ), ATTACKER( 3 );
+        GOALKEEPER, DEFENDER, ATTACKER;
+    }
+
+    public enum PlayerType
+    {
+        GOALKEEPER( 0, 1 ), TOP_DEFENDER( 1, 1 ), BOT_DEFENDER( 2, 1 ), TOP_ATTACKER( 3, 3 ), MID_ATTACKER( 4, 3 ), BOT_ATTACKER( 5, 3 );
 
         int moves;
+        int index;
 
-        PlayerType( int moves )
+        PlayerType( int index, int moves )
         {
+            this.index = index;
             this.moves = moves;
         }
 
-        public static PlayerType getPositionForIndex( int index )
+        public static PlayerType getTypeForIndex( int index )
         {
-            if( index == 0 )
+            switch( index )
             {
-                return GOALKEEPER;
-            }
-            else if( index == 1 || index == 2 )
-            {
-                return DEFENDER;
-            }
-            else
-            {
-                return ATTACKER;
+                case 0:
+                    return GOALKEEPER;
+                case 1:
+                    return TOP_DEFENDER;
+                case 2:
+                    return BOT_DEFENDER;
+                case 3:
+                    return TOP_ATTACKER;
+                case 4:
+                    return MID_ATTACKER;
+                case 5:
+                    return BOT_ATTACKER;
+                default:
+                    return null;
             }
         }
 
-        public Point getLogicalCoordinates( Team team, int pitchLength, int index )
+        public Point getLogicalCoordinates( Team team, int pitchLength )
         {
-            /* index is internal index for each position */
-
             int xBase = team == Team.A ? 0 : pitchLength;
             int factor = team == Team.A ? 1 : -1;
 
             switch( this )
             {
-                case ATTACKER:
-                    if( index == 3 )
-                    {
-                        return new Point( 5 * factor + xBase, 2 );
-                    }
-                    else if( index == 4 )
-                    {
-                        return new Point( 5 * factor + xBase, 5 );
-                    }
-                    else
-                    {
-                        return new Point( 5 * factor + xBase, 8 );
-                    }
+                case TOP_ATTACKER:
+                    return new Point( 5 * factor + xBase, 2 );
 
-                case DEFENDER:
-                    if( index == 1 )
-                    {
-                        return new Point( 3 * factor + xBase, 3 );
-                    }
-                    else if( index == 2 )
-                    {
-                        return new Point( 3 * factor + xBase, 7 );
-                    }
+                case MID_ATTACKER:
+                    return new Point( 5 * factor + xBase, 5 );
+
+                case BOT_ATTACKER:
+                    return new Point( 5 * factor + xBase, 8 );
+
+                case TOP_DEFENDER:
+                    return new Point( 3 * factor + xBase, 3 );
+
+                case BOT_DEFENDER:
+                    return new Point( 3 * factor + xBase, 7 );
 
                 case GOALKEEPER:
+                    return new Point( xBase, 5 );
 
-                    if( index == 0 )
-                    {
-                        return new Point( xBase, 5 );
-                    }
                 default:
                     return null;
             }
+        }
+
+        public GeneralPlayerType getGeneralType()
+        {
+            if( ordinal() == 0 )
+            {
+                return GeneralPlayerType.GOALKEEPER;
+            }
+            else if( ordinal() <= 2 )
+            {
+                return GeneralPlayerType.DEFENDER;
+            }
+            else
+            {
+                return GeneralPlayerType.ATTACKER;
+            }
+        }
+
+        public int getIndex()
+        {
+            return index;
         }
     }
 
@@ -83,20 +102,22 @@ public class Player extends BallsEntity
         A, B;
     }
 
-    private Team     team;
-    private PlayerType position;
+    private Team       team;
+    private PlayerType type;
 
-    public Player( Point coordinates, PlayerType position, Team team )
+    public Player( Point coordinates, PlayerType type, Team team )
     {
         super( coordinates );
 
+        this.type = type;
         this.team = team;
     }
 
-    public Player( Point coordinates, PlayerType position, Team team, Sprite sprite )
+    public Player( Point coordinates, PlayerType type, Team team, Sprite sprite )
     {
         super( coordinates, sprite );
 
+        this.type = type;
         this.team = team;
     }
 
@@ -110,13 +131,13 @@ public class Player extends BallsEntity
         this.team = team;
     }
 
-    public PlayerType getPosition()
+    public PlayerType getType()
     {
-        return position;
+        return type;
     }
 
-    public void setPosition( PlayerType position )
+    public void setType( PlayerType type )
     {
-        this.position = position;
+        this.type = type;
     }
 }

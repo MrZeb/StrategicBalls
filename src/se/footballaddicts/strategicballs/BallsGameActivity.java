@@ -525,8 +525,11 @@ public class BallsGameActivity extends SimpleBaseGameActivity
 
                 return null;
             }
-
-            moves.add( new Move( MoveType.PLAYER, player.getTeam(), player.getType(), player.getRoundStartCoordinates(), player.getCurrentCoordinates() ) );
+            
+            if ( player.getTeam() == mTeam )
+            {
+                moves.add( new Move( MoveType.PLAYER, player.getTeam(), player.getType(), player.getRoundStartCoordinates(), player.getCurrentCoordinates() ) );
+            }
             // Log.d( "playermoves", player.getType() + " start: " +
             // player.getRoundStartCoordinates() + " current: " +
             // player.getCurrentCoordinates() );

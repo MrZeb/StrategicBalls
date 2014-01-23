@@ -21,6 +21,7 @@ import se.footballaddicts.strategicballs.multiplayer.client.ClientMessageFlags;
 import se.footballaddicts.strategicballs.multiplayer.client.ConnectionCloseClientMessage;
 import se.footballaddicts.strategicballs.multiplayer.client.ConnectionEstablishClientMessage;
 import se.footballaddicts.strategicballs.multiplayer.client.ConnectionPingClientMessage;
+import se.footballaddicts.strategicballs.multiplayer.server.CoinTossServerMessage;
 import se.footballaddicts.strategicballs.multiplayer.server.ConnectionEstablishedServerMessage;
 import se.footballaddicts.strategicballs.multiplayer.server.ConnectionPongServerMessage;
 import se.footballaddicts.strategicballs.multiplayer.server.ConnectionRejectedProtocolMissmatchServerMessage;
@@ -152,7 +153,18 @@ public class BallsServer extends SocketServer<SocketConnectionClientConnector> i
                                                                                                           // for
                                                                                                           // first
                                                                                                           // two
-                                                                                                          // connections!
+        //All players are here, send coin toss                                                                                                  // connections!
+        if ( mClientConnectors.size() > 0 )
+        {
+            TeamType teamInPossesion = Math.random() > 0.5 ? TeamType.LEFT : TeamType.RIGHT;
+            for ( SocketConnectionClientConnector client : mClientConnectors )
+            {
+                client.sendServerMessage( new CoinTossServerMessage( teamInPossesion ) );
+            }
+            clientConnector.sendServerMessage( new CoinTossServerMessage( teamInPossesion ) );
+            
+        }
+        
         return clientConnector;
     }
 

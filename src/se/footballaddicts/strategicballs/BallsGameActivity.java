@@ -59,6 +59,7 @@ import se.footballaddicts.strategicballs.multiplayer.EndRoundServerMessage;
 import se.footballaddicts.strategicballs.multiplayer.Move;
 import se.footballaddicts.strategicballs.multiplayer.Move.MoveType;
 import se.footballaddicts.strategicballs.multiplayer.SetUserIDServerMessage;
+import se.footballaddicts.strategicballs.multiplayer.server.CoinTossServerMessage;
 import se.footballaddicts.strategicballs.multiplayer.server.ServerMessageFlags;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -623,7 +624,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
 
             this.mServerConnector.registerServerMessage( SetUserIDServerMessage.FLAG_SET_ID_MESSAGE, SetUserIDServerMessage.class );
 
-            // this.mServerConnector
+            this.mServerConnector.registerServerMessage( CoinTossServerMessage.FLAG_COIN_TOSS, CoinTossServerMessage.class );
 
             // this.mServerConnector
 
@@ -700,6 +701,10 @@ public class BallsGameActivity extends SimpleBaseGameActivity
             {
                 mUserID = ((SetUserIDServerMessage) pMessage).mUserID;
                 mTeam = ((SetUserIDServerMessage) pMessage).team;
+            }
+            else if ( pMessage instanceof CoinTossServerMessage )
+            {
+                mTeamInPossession = mTeam;
             }
         }
     }

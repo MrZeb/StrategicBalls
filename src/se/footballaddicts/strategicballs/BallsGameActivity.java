@@ -150,6 +150,8 @@ public class BallsGameActivity extends SimpleBaseGameActivity
     private Toast                       currentToast;
     private Ball                        mBall;
     private boolean                     hasShownServerDialog              = false;
+    
+    private boolean                     isWaiting = false;
 
     @Override
     public EngineOptions onCreateEngineOptions()
@@ -774,15 +776,18 @@ public class BallsGameActivity extends SimpleBaseGameActivity
                 @Override
                 public boolean onAreaTouched( final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY )
                 {
-                    float xPosition = pSceneTouchEvent.getX() - this.getWidth() / 2;
-                    float yPosition = pSceneTouchEvent.getY() - this.getHeight() / 2;
+                    if ( mTeam == player.getTeam() )
+                    {
+                        float xPosition = pSceneTouchEvent.getX() - this.getWidth() / 2;
+                        float yPosition = pSceneTouchEvent.getY() - this.getHeight() / 2;
 
-                    this.setPosition( getProperX( xPosition ), getProperY( yPosition ) );
+                        this.setPosition( getProperX( xPosition ), getProperY( yPosition ) );
 
-                    mDropSelection = pSceneTouchEvent.getAction() == TouchEvent.ACTION_UP;
-                    mSelectedEntity = player;
+                        mDropSelection = pSceneTouchEvent.getAction() == TouchEvent.ACTION_UP;
+                        mSelectedEntity = player;
 
-                    this.setScale( 1.5f );
+                        this.setScale( 1.5f );
+                    }
 
                     return true;
                 }

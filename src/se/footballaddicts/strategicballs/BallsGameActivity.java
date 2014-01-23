@@ -148,6 +148,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
 
     private Toast                       currentToast;
     private Ball                        mBall;
+    private boolean                     hasShownServerDialog              = false;
 
     @Override
     public EngineOptions onCreateEngineOptions()
@@ -256,7 +257,12 @@ public class BallsGameActivity extends SimpleBaseGameActivity
         super.onResumeGame();
 
         Log.d( "SERVER", "HIYA" );
-        this.showDialog( DIALOG_CHOOSE_SERVER_OR_CLIENT_ID );
+
+        if( !hasShownServerDialog )
+        {
+            this.showDialog( DIALOG_CHOOSE_SERVER_OR_CLIENT_ID );
+            hasShownServerDialog = true;
+        }
     }
 
     @Override
@@ -522,8 +528,6 @@ public class BallsGameActivity extends SimpleBaseGameActivity
                         Log.d( "opponent", player.getType() + " " + player.getTeam() + " start: " + player.getRoundStartCoordinates() + " current: " + player.getCurrentCoordinates() + " from: "
                                 + move.getFrom() + " to: " + move.getTo() );
 
-                        move.setTo( new Point( move.getTo().x, move.getTo().y - 1 ) );
-
                         moveEntity( player, move );
 
                         break;
@@ -539,8 +543,6 @@ public class BallsGameActivity extends SimpleBaseGameActivity
 
     private void moveEntity( BallsEntity entity, Move move )
     {
-        Log.d( "opponentmove", entity.getClass() + " " + move.getType() + " " + move.getTo() );
-
         entity.getSprite().setX( mPitchMatrix[move.getTo().x][move.getTo().y].getX() );
         entity.getSprite().setY( mPitchMatrix[move.getTo().x][move.getTo().y].getY() );
     }
@@ -637,6 +639,11 @@ public class BallsGameActivity extends SimpleBaseGameActivity
             if( pMessage instanceof EndRoundServerMessage )
             {
                 updateEntityPositions( ((EndRoundServerMessage) pMessage).getMoves() );
+
+                if( waitForOtherUserMessage != null )
+                {
+                    waitForOtherUserMessage.dismiss();
+                }
             }
         }
     }

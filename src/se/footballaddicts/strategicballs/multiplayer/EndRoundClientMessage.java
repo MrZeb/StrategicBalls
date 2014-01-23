@@ -65,8 +65,24 @@ public class EndRoundClientMessage extends ClientMessage
         for( Move move : mMoves )
         {
             pDataOutputStream.writeInt( move.getType().id );
-            pDataOutputStream.writeInt( move.getTeam().ordinal() );
-            pDataOutputStream.writeInt( move.getPlayerType().getIndex() );
+            
+            if( move.getTeam() != null )
+            {
+                pDataOutputStream.writeInt( move.getTeam().ordinal() );
+            }
+            else
+            {
+                pDataOutputStream.writeInt( 0 );
+            }
+            if( move.getPlayerType() != null )
+            {
+                pDataOutputStream.writeInt( move.getPlayerType().getIndex() );
+            }
+            else
+            {
+                pDataOutputStream.writeInt( 0 );
+            }
+            
             pDataOutputStream.writeInt( move.getFrom().x );
             pDataOutputStream.writeInt( move.getFrom().y );
             pDataOutputStream.writeInt( move.getTo().x );

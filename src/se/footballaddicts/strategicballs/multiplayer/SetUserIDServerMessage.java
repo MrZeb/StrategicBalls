@@ -19,6 +19,8 @@ public class SetUserIDServerMessage extends ServerMessage implements BallsConsta
     // ===========================================================
     // Constants
     // ===========================================================
+    
+    public static final short FLAG_SET_ID_MESSAGE = 100;
 
     // ===========================================================
     // Fields
@@ -56,7 +58,7 @@ public class SetUserIDServerMessage extends ServerMessage implements BallsConsta
     @Override
     public short getFlag()
     {
-        return 0;
+        return FLAG_SET_ID_MESSAGE;
     }
 
     @Override

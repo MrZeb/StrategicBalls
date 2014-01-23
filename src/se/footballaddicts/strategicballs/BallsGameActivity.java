@@ -24,14 +24,16 @@ import org.andengine.entity.sprite.Sprite;
 import org.andengine.entity.text.Text;
 import org.andengine.entity.text.TextOptions;
 import org.andengine.entity.util.FPSLogger;
-import org.andengine.extension.multiplayer.protocol.adt.message.client.ClientMessage;
+import org.andengine.extension.multiplayer.protocol.adt.message.server.IServerMessage;
+import org.andengine.extension.multiplayer.protocol.client.IServerMessageReader;
+import org.andengine.extension.multiplayer.protocol.client.IServerMessageReader.ServerMessageReader;
 import org.andengine.extension.multiplayer.protocol.client.connector.ServerConnector;
+import org.andengine.extension.multiplayer.protocol.client.connector.ServerConnector.IServerConnectorListener;
 import org.andengine.extension.multiplayer.protocol.client.connector.SocketConnectionServerConnector.ISocketConnectionServerConnectorListener;
-import org.andengine.extension.multiplayer.protocol.server.SocketServer;
-import org.andengine.extension.multiplayer.protocol.server.SocketServer.ISocketServerListener;
 import org.andengine.extension.multiplayer.protocol.server.connector.ClientConnector;
-import org.andengine.extension.multiplayer.protocol.server.connector.SocketConnectionClientConnector;
 import org.andengine.extension.multiplayer.protocol.server.connector.SocketConnectionClientConnector.ISocketConnectionClientConnectorListener;
+import org.andengine.extension.multiplayer.protocol.shared.Connection;
+import org.andengine.extension.multiplayer.protocol.shared.IMessageHandler;
 import org.andengine.extension.multiplayer.protocol.shared.SocketConnection;
 import org.andengine.extension.multiplayer.protocol.util.WifiUtils;
 import org.andengine.input.touch.TouchEvent;
@@ -50,7 +52,6 @@ import org.andengine.opengl.texture.region.TiledTextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.ui.activity.SimpleBaseGameActivity;
 import org.andengine.util.HorizontalAlign;
-import org.andengine.util.color.Color;
 import org.andengine.util.debug.Debug;
 
 import se.footballaddicts.strategicballs.Player.Position;
@@ -60,9 +61,11 @@ import se.footballaddicts.strategicballs.multiplayer.EndRoundClientMessage;
 import se.footballaddicts.strategicballs.multiplayer.EndRoundServerMessage;
 import se.footballaddicts.strategicballs.multiplayer.Move;
 import se.footballaddicts.strategicballs.multiplayer.Move.MoveType;
+import se.footballaddicts.strategicballs.multiplayer.SetUserIDServerMessage;
 import se.footballaddicts.strategicballs.multiplayer.server.ServerMessageFlags;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.graphics.Point;
@@ -144,6 +147,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
     private Entity[][]                  mPitchMatrix;
     protected boolean                   isServer;
     private Font                        mFont;
+    private ProgressDialog              waitForOtherUserMessage;
 
     @Override
     public EngineOptions onCreateEngineOptions()
@@ -412,6 +416,16 @@ public class BallsGameActivity extends SimpleBaseGameActivity
         {
             Debug.e( e );
         }
+        
+        runOnUiThread( new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                waitForOtherUserMessage = ProgressDialog.show( BallsGameActivity.this, null, "Waiting for the other player to end its turn", true );
+            }
+        } );
+        
 
     }
 
@@ -467,9 +481,15 @@ public class BallsGameActivity extends SimpleBaseGameActivity
     {
         try
         {
-            this.mServerConnector = new BallsServerConnector( this.mServerIP, new ExampleServerConnectorListener() );
+            this.mServerConnector = new BallsServerConnector( this.mServerIP,  new ExampleServerConnectorListener(), new ExampleServerMessageReader() );
 
             this.mServerConnector.registerServerMessage( EndRoundServerMessage.FLAG_END_ROUND_MESSAGE, EndRoundServerMessage.class );
+            
+            this.mServerConnector.registerServerMessage( SetUserIDServerMessage.FLAG_SET_ID_MESSAGE, SetUserIDServerMessage.class );
+            
+            //this.mServerConnector
+            
+            //this.mServerConnector
 
             this.mServerConnector.getConnection().start();
         }
@@ -509,20 +529,35 @@ public class BallsGameActivity extends SimpleBaseGameActivity
             BallsGameActivity.this.toast( "SERVER: Client disconnected: " + pClientConnector.getConnection().getSocket().getInetAddress().getHostAddress() );
         }
     }
+    
+    public class ExampleServerMessageReader extends ServerMessageReader<SocketConnection>
+    {
+        @Override
+        public void handleMessage( ServerConnector<SocketConnection> pConnector, IServerMessage pMessage ) throws IOException
+        {
+            super.handleMessage( pConnector, pMessage );
+            
+            if ( pMessage instanceof EndRoundServerMessage )
+            {
+                
+            }
+        }
+    }
 
     private class BallsServerConnector extends ServerConnector<SocketConnection> implements BallsConstants, ServerMessageFlags
     {
-        public BallsServerConnector( final String pServerIP, final ISocketConnectionServerConnectorListener pSocketConnectionServerConnectorListener ) throws IOException
-        {
-            super( new SocketConnection( new Socket( pServerIP, SERVER_PORT ) ), pSocketConnectionServerConnectorListener );
+        public BallsServerConnector( final String pServerIP, final ISocketConnectionServerConnectorListener pSocketConnectionServerConnectorListener, ExampleServerMessageReader pServerMessageReader ) throws IOException
+        {   
+            super( new SocketConnection( new Socket( pServerIP, SERVER_PORT ) ), pServerMessageReader, pSocketConnectionServerConnectorListener);
         }
 
         @Override
         public void read( DataInputStream pDataInputStream ) throws IOException
         {
             super.read( pDataInputStream );
-
         }
+        
+        
     }
 
     private void addPlayers( Team team, Scene scene )

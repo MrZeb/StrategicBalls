@@ -1,6 +1,8 @@
 package se.footballaddicts.strategicballs.multiplayer;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
 
 import org.andengine.engine.handler.IUpdateHandler;
 import org.andengine.extension.multiplayer.protocol.adt.message.IMessage;
@@ -24,7 +26,6 @@ import se.footballaddicts.strategicballs.multiplayer.server.ConnectionEstablishe
 import se.footballaddicts.strategicballs.multiplayer.server.ConnectionPongServerMessage;
 import se.footballaddicts.strategicballs.multiplayer.server.ConnectionRejectedProtocolMissmatchServerMessage;
 import se.footballaddicts.strategicballs.multiplayer.server.ServerMessageFlags;
-import android.util.Log;
 
 import com.badlogic.gdx.physics.box2d.Contact;
 import com.badlogic.gdx.physics.box2d.ContactImpulse;
@@ -34,6 +35,7 @@ import com.badlogic.gdx.physics.box2d.Manifold;
 public class BallsServer extends SocketServer<SocketConnectionClientConnector> implements BallsConstants, ServerMessageFlags, ClientMessageFlags, IUpdateHandler, ContactListener
 {
     private final MessagePool<IMessage> mMessagePool = new MessagePool<IMessage>();
+    private final Collection<SocketConnectionClientConnector> clients = new ArrayList<SocketConnectionClientConnector>();
 
     public BallsServer( final ISocketConnectionClientConnectorListener pSocketConnectionClientConnectorListener )
     {
@@ -44,85 +46,100 @@ public class BallsServer extends SocketServer<SocketConnectionClientConnector> i
     protected SocketConnectionClientConnector newClientConnector( SocketConnection pSocketConnection ) throws IOException
     {
         final SocketConnectionClientConnector clientConnector = new SocketConnectionClientConnector( pSocketConnection );
-        
-        clientConnector.registerClientMessage( EndRoundClientMessage.FLAG_END_ROUND_MESSAGE, EndRoundClientMessage.class, new IClientMessageHandler<SocketConnection>()
-        {
 
-            @Override
-            public void onHandleMessage( ClientConnector<SocketConnection> pClientConnector, IClientMessage pClientMessage )
-                    throws IOException
-            {
-                 Log.d("Hola", "dola=" + pClientMessage.toString());
-            }} );
-
-        clientConnector.registerClientMessage( FLAG_MESSAGE_CLIENT_CONNECTION_CLOSE, ConnectionCloseClientMessage.class, new IClientMessageHandler<SocketConnection>()
-        {
-            @Override
-            public void onHandleMessage( final ClientConnector<SocketConnection> pClientConnector, final IClientMessage pClientMessage ) throws IOException
-            {
-                pClientConnector.terminate();
-            }
-        } );
-
-        clientConnector.registerClientMessage( FLAG_MESSAGE_CLIENT_CONNECTION_ESTABLISH, ConnectionEstablishClientMessage.class, new IClientMessageHandler<SocketConnection>()
-        {
-            @Override
-            public void onHandleMessage( final ClientConnector<SocketConnection> pClientConnector, final IClientMessage pClientMessage ) throws IOException
-            {
-                final ConnectionEstablishClientMessage connectionEstablishClientMessage = (ConnectionEstablishClientMessage) pClientMessage;
-                if( connectionEstablishClientMessage.getProtocolVersion() == MessageConstants.PROTOCOL_VERSION )
+        clientConnector.registerClientMessage( EndRoundClientMessage.FLAG_END_ROUND_MESSAGE, EndRoundClientMessage.class,
+                new IClientMessageHandler<SocketConnection>()
                 {
-                    final ConnectionEstablishedServerMessage connectionEstablishedServerMessage = (ConnectionEstablishedServerMessage) BallsServer.this.mMessagePool
-                            .obtainMessage( FLAG_MESSAGE_SERVER_CONNECTION_ESTABLISHED );
-                    try
+                    @Override
+                    public void onHandleMessage( ClientConnector<SocketConnection> pClientConnector, IClientMessage pClientMessage )
+                            throws IOException
                     {
-                        pClientConnector.sendServerMessage( connectionEstablishedServerMessage );
+                        for ( SocketConnectionClientConnector client : clients )
+                        {
+                            if ( !client.equals( clientConnector ) )
+                            {
+                                client.sendServerMessage( new EndRoundServerMessage( ((EndRoundClientMessage) pClientMessage).getmUserID(), ((EndRoundClientMessage) pClientMessage).getMoves() ) );
+                            }
+                        }
                     }
-                    catch( IOException e )
-                    {
-                        Debug.e( e );
-                    }
-                    
-                    BallsServer.this.mMessagePool.recycleMessage( connectionEstablishedServerMessage );
-                }
-                else
+                } );
+
+        clientConnector.registerClientMessage( FLAG_MESSAGE_CLIENT_CONNECTION_CLOSE, ConnectionCloseClientMessage.class,
+                new IClientMessageHandler<SocketConnection>()
                 {
-                    final ConnectionRejectedProtocolMissmatchServerMessage connectionRejectedProtocolMissmatchServerMessage = (ConnectionRejectedProtocolMissmatchServerMessage) BallsServer.this.mMessagePool
-                            .obtainMessage( FLAG_MESSAGE_SERVER_CONNECTION_REJECTED_PROTOCOL_MISSMATCH );
-                    connectionRejectedProtocolMissmatchServerMessage.setProtocolVersion( MessageConstants.PROTOCOL_VERSION );
-                    try
+                    @Override
+                    public void onHandleMessage( final ClientConnector<SocketConnection> pClientConnector,
+                            final IClientMessage pClientMessage ) throws IOException
                     {
-                        pClientConnector.sendServerMessage( connectionRejectedProtocolMissmatchServerMessage );
+                        clients.remove( clientConnector );
+                        pClientConnector.terminate();
                     }
-                    catch( IOException e )
+                } );
+
+        clientConnector.registerClientMessage( FLAG_MESSAGE_CLIENT_CONNECTION_ESTABLISH, ConnectionEstablishClientMessage.class,
+                new IClientMessageHandler<SocketConnection>()
+                {
+                    @Override
+                    public void onHandleMessage( final ClientConnector<SocketConnection> pClientConnector,
+                            final IClientMessage pClientMessage ) throws IOException
                     {
-                        Debug.e( e );
+                        final ConnectionEstablishClientMessage connectionEstablishClientMessage = (ConnectionEstablishClientMessage) pClientMessage;
+                        if( connectionEstablishClientMessage.getProtocolVersion() == MessageConstants.PROTOCOL_VERSION )
+                        {
+                            final ConnectionEstablishedServerMessage connectionEstablishedServerMessage = (ConnectionEstablishedServerMessage) BallsServer.this.mMessagePool
+                                    .obtainMessage( FLAG_MESSAGE_SERVER_CONNECTION_ESTABLISHED );
+                            try
+                            {
+                                pClientConnector.sendServerMessage( connectionEstablishedServerMessage );
+                            }
+                            catch( IOException e )
+                            {
+                                Debug.e( e );
+                            }
+                            //clients.add( clientConnector );
+                            BallsServer.this.mMessagePool.recycleMessage( connectionEstablishedServerMessage );
+                        }
+                        else
+                        {
+                            final ConnectionRejectedProtocolMissmatchServerMessage connectionRejectedProtocolMissmatchServerMessage = (ConnectionRejectedProtocolMissmatchServerMessage) BallsServer.this.mMessagePool
+                                    .obtainMessage( FLAG_MESSAGE_SERVER_CONNECTION_REJECTED_PROTOCOL_MISSMATCH );
+                            connectionRejectedProtocolMissmatchServerMessage.setProtocolVersion( MessageConstants.PROTOCOL_VERSION );
+                            try
+                            {
+                                pClientConnector.sendServerMessage( connectionRejectedProtocolMissmatchServerMessage );
+                            }
+                            catch( IOException e )
+                            {
+                                Debug.e( e );
+                            }
+
+                            BallsServer.this.mMessagePool.recycleMessage( connectionRejectedProtocolMissmatchServerMessage );
+                        }
                     }
+                } );
 
-                    BallsServer.this.mMessagePool.recycleMessage( connectionRejectedProtocolMissmatchServerMessage );
-                }
-            }
-        } );
-
-        clientConnector.registerClientMessage( FLAG_MESSAGE_CLIENT_CONNECTION_PING, ConnectionPingClientMessage.class, new IClientMessageHandler<SocketConnection>()
-        {
-            @Override
-            public void onHandleMessage( final ClientConnector<SocketConnection> pClientConnector, final IClientMessage pClientMessage ) throws IOException
-            {
-                final ConnectionPongServerMessage connectionPongServerMessage = (ConnectionPongServerMessage) BallsServer.this.mMessagePool.obtainMessage( FLAG_MESSAGE_SERVER_CONNECTION_PONG );
-                try
+        clientConnector.registerClientMessage( FLAG_MESSAGE_CLIENT_CONNECTION_PING, ConnectionPingClientMessage.class,
+                new IClientMessageHandler<SocketConnection>()
                 {
-                    pClientConnector.sendServerMessage( connectionPongServerMessage );
-                }
-                catch( IOException e )
-                {
-                    Debug.e( e );
-                }
+                    @Override
+                    public void onHandleMessage( final ClientConnector<SocketConnection> pClientConnector,
+                            final IClientMessage pClientMessage ) throws IOException
+                    {
+                        final ConnectionPongServerMessage connectionPongServerMessage = (ConnectionPongServerMessage) BallsServer.this.mMessagePool
+                                .obtainMessage( FLAG_MESSAGE_SERVER_CONNECTION_PONG );
+                        try
+                        {
+                            pClientConnector.sendServerMessage( connectionPongServerMessage );
+                        }
+                        catch( IOException e )
+                        {
+                            Debug.e( e );
+                        }
 
-                BallsServer.this.mMessagePool.recycleMessage( connectionPongServerMessage );
-            }
-        } );
-
+                        BallsServer.this.mMessagePool.recycleMessage( connectionPongServerMessage );
+                    }
+                } );
+        clients.add( clientConnector );
         clientConnector.sendServerMessage( new SetUserIDServerMessage( this.mClientConnectors.size() ) ); // TODO
                                                                                                           // should
                                                                                                           // not

@@ -328,8 +328,8 @@ public class BallsGameActivity extends SimpleBaseGameActivity
         scene.registerTouchArea( mBall.getSprite() );
 
         // Add players
-        addPlayers( TeamType.B, scene );
-        addPlayers( TeamType.A, scene );
+        addPlayers( TeamType.RIGHT, scene );
+        addPlayers( TeamType.LEFT, scene );
 
         // updateEntityPositions( getMovesForRound() );
 
@@ -337,7 +337,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
 
         mBall.getSprite().setY( mPitchMatrix[5][5].getY() );
 
-        if( mCurrentTeam == TeamType.A )
+        if( mCurrentTeam == TeamType.LEFT )
         {
             mBall.setRoundStartCoordinates( new Point( 5, 5 ) );
             mBall.getSprite().setX( mPitchMatrix[5][5].getX() );
@@ -436,23 +436,23 @@ public class BallsGameActivity extends SimpleBaseGameActivity
     {
         if( new Random().nextInt( 2 ) == 1 )
         {
-            setCurrentTeam( TeamType.A );
+            setCurrentTeam( TeamType.LEFT );
         }
         else
         {
-            setCurrentTeam( TeamType.B );
+            setCurrentTeam( TeamType.RIGHT );
         }
     }
 
     protected void endRound()
     {
-        if( mCurrentTeam == TeamType.A )
+        if( mCurrentTeam == TeamType.LEFT )
         {
-            setCurrentTeam( TeamType.B );
+            setCurrentTeam( TeamType.RIGHT );
         }
         else
         {
-            setCurrentTeam( TeamType.A );
+            setCurrentTeam( TeamType.LEFT );
         }
 
         try
@@ -678,7 +678,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
 
                     logicalCoordinates = type.getLogicalCoordinates( team, mPitchMatrix[0].length );
 
-                    if( team == TeamType.A )
+                    if( team == TeamType.LEFT )
                     {
                         xPosition = mPitchMatrix[5][3].getX();
 
@@ -710,7 +710,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
 
                     logicalCoordinates = type.getLogicalCoordinates( team, mPitchMatrix[0].length );
 
-                    if( team == TeamType.A )
+                    if( team == TeamType.LEFT )
                     {
                         xPosition = mPitchMatrix[logicalCoordinates.x][0].getX();
 
@@ -733,7 +733,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
 
                     logicalCoordinates = type.getLogicalCoordinates( team, mPitchMatrix[0].length );
 
-                    if( team == TeamType.A )
+                    if( team == TeamType.LEFT )
                     {
                         xPosition = mPitchMatrix[logicalCoordinates.x][0].getX();
                         yPosition = mPitchMatrix[0][logicalCoordinates.y].getY();

@@ -126,7 +126,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
     private BallsServer                 mServer;
     private BallsServerConnector        mServerConnector;
     private String                      mServerIP;
-    protected Object                    mUserID;
+    protected Integer                    mUserID;
     private TiledTextureRegion          mRoundActiveTextureRegion;
     private TextureRegion               mRoundCompleteTextureRegion;
     private Sprite                      roundActiveButton;
@@ -138,6 +138,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
     private TextureRegion               mAttackerBTextureRegion;
     private TextureRegion               mGoalkeeperATextureRegion;
     private TextureRegion               mGoalkeeperBTextureRegion;
+    private TeamType                    mTeam;
 
     private TeamType                    mCurrentTeam;
 
@@ -644,6 +645,11 @@ public class BallsGameActivity extends SimpleBaseGameActivity
                 {
                     waitForOtherUserMessage.dismiss();
                 }
+            }
+            else if ( pMessage instanceof SetUserIDServerMessage )
+            {
+                mUserID = ((SetUserIDServerMessage) pMessage).mUserID;
+                mTeam = ((SetUserIDServerMessage) pMessage).team;
             }
         }
     }

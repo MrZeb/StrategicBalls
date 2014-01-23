@@ -50,7 +50,7 @@ import org.andengine.ui.activity.SimpleBaseGameActivity;
 import org.andengine.util.HorizontalAlign;
 import org.andengine.util.debug.Debug;
 
-import se.footballaddicts.strategicballs.Player.Position;
+import se.footballaddicts.strategicballs.Player.PlayerType;
 import se.footballaddicts.strategicballs.Player.Team;
 import se.footballaddicts.strategicballs.multiplayer.BallsServer;
 import se.footballaddicts.strategicballs.multiplayer.EndRoundClientMessage;
@@ -555,7 +555,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
     {
         for( int i = 0; i < 6; i++ )
         {
-            Position position = Position.getPositionForIndex( i );
+            PlayerType position = PlayerType.getPositionForIndex( i );
 
             float xPosition = 0;
             float yPosition = 0;

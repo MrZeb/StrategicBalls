@@ -6,18 +6,18 @@ import android.graphics.Point;
 
 public class Player extends BallsEntity
 {
-    enum Position
+    enum PlayerType
     {
         GOALKEEPER( 1 ), DEFENDER( 1 ), ATTACKER( 3 );
 
         int moves;
 
-        Position( int moves )
+        PlayerType( int moves )
         {
             this.moves = moves;
         }
 
-        public static Position getPositionForIndex( int index )
+        public static PlayerType getPositionForIndex( int index )
         {
             if( index == 0 )
             {
@@ -84,16 +84,16 @@ public class Player extends BallsEntity
     }
 
     private Team     team;
-    private Position position;
+    private PlayerType position;
 
-    public Player( Point coordinates, Position position, Team team )
+    public Player( Point coordinates, PlayerType position, Team team )
     {
         super( coordinates );
 
         this.team = team;
     }
 
-    public Player( Point coordinates, Position position, Team team, Sprite sprite )
+    public Player( Point coordinates, PlayerType position, Team team, Sprite sprite )
     {
         super( coordinates, sprite );
 
@@ -110,12 +110,12 @@ public class Player extends BallsEntity
         this.team = team;
     }
 
-    public Position getPosition()
+    public PlayerType getPosition()
     {
         return position;
     }
 
-    public void setPosition( Position position )
+    public void setPosition( PlayerType position )
     {
         this.position = position;
     }

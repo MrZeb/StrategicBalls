@@ -140,7 +140,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
     private TextureRegion               mGoalkeeperBTextureRegion;
     private TeamType                    mTeam;
 
-    private TeamType                    mCurrentTeam;
+    private TeamType                    mTeamInPossession;
 
     private Entity[][]                  mPitchMatrix;
     protected boolean                   isServer;
@@ -150,8 +150,8 @@ public class BallsGameActivity extends SimpleBaseGameActivity
     private Toast                       currentToast;
     private Ball                        mBall;
     private boolean                     hasShownServerDialog              = false;
-    
-    private boolean                     isWaiting = false;
+
+    private boolean                     isWaiting                         = false;
     private Set<Move>                   storedMoves;
 
     private AlertDialog                 mWaitingForConnectionDialog;
@@ -323,17 +323,22 @@ public class BallsGameActivity extends SimpleBaseGameActivity
             @Override
             public boolean onAreaTouched( TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY )
             {
-                float xPosition = pSceneTouchEvent.getX() - this.getWidth() / 2;
-                float yPosition = pSceneTouchEvent.getY() - this.getHeight() / 2;
+                if( mTeamInPossession == mTeam )
+                {
+                    float xPosition = pSceneTouchEvent.getX() - this.getWidth() / 2;
+                    float yPosition = pSceneTouchEvent.getY() - this.getHeight() / 2;
 
-                this.setPosition( getProperX( xPosition ), getProperY( yPosition ) );
+                    this.setPosition( getProperX( xPosition ), getProperY( yPosition ) );
 
-                mDropSelection = pSceneTouchEvent.getAction() == TouchEvent.ACTION_UP;
-                mSelectedEntity = mBall;
+                    mDropSelection = pSceneTouchEvent.getAction() == TouchEvent.ACTION_UP;
+                    mSelectedEntity = mBall;
 
-                this.setScale( 1.5f );
+                    this.setScale( 1.5f );
 
-                return true;
+                    return true;
+                }
+
+                return false;
             }
         } );
 
@@ -349,7 +354,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
 
         mBall.getSprite().setY( mPitchMatrix[5][5].getY() );
 
-        if( mCurrentTeam == TeamType.LEFT )
+        if( mTeamInPossession == TeamType.LEFT )
         {
             mBall.setRoundStartCoordinates( new Point( 5, 5 ) );
             mBall.getSprite().setX( mPitchMatrix[5][5].getX() );
@@ -448,25 +453,25 @@ public class BallsGameActivity extends SimpleBaseGameActivity
     {
         if( new Random().nextInt( 2 ) == 1 )
         {
-            setCurrentTeam( TeamType.LEFT );
+            setTeamInPossession( TeamType.LEFT );
         }
         else
         {
-            setCurrentTeam( TeamType.RIGHT );
+            setTeamInPossession( TeamType.RIGHT );
         }
     }
 
     protected void endRound()
     {
-        if( mCurrentTeam == TeamType.LEFT )
+        if( mTeamInPossession == TeamType.LEFT )
         {
-            setCurrentTeam( TeamType.RIGHT );
+            setTeamInPossession( TeamType.RIGHT );
         }
         else
         {
-            setCurrentTeam( TeamType.LEFT );
+            setTeamInPossession( TeamType.LEFT );
         }
-        
+
         try
         {
             Set<Move> moves = getMovesForRound();
@@ -475,6 +480,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
             {
                 return;
             }
+
             BallsGameActivity.this.mServerConnector.sendClientMessage( new EndRoundClientMessage( BallsGameActivity.this.mUserID, moves ) );
         }
         catch( final IOException e )
@@ -482,7 +488,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
             Debug.e( e );
         }
 
-        if ( storedMoves != null )
+        if( storedMoves != null )
         {
             updateEntityPositions( storedMoves );
             storedMoves = null;
@@ -495,17 +501,16 @@ public class BallsGameActivity extends SimpleBaseGameActivity
                 @Override
                 public void run()
                 {
-                    waitForOtherUserMessage = ProgressDialog.show( BallsGameActivity.this, null,
-                            "Waiting for the other player to end its turn", true );
+                    waitForOtherUserMessage = ProgressDialog.show( BallsGameActivity.this, null, "Waiting for the other player to end its turn", true );
                 }
             } );
         }
     }
 
-    private void setCurrentTeam( TeamType team )
+    private void setTeamInPossession( TeamType team )
     {
-        mCurrentTeam = team;
-        toast( "END ROUND! Team " + mCurrentTeam + "'s turn!" );
+        mTeamInPossession = team;
+        toast( "END ROUND! Team " + mTeamInPossession + "'s turn!" );
     }
 
     protected Set<Move> getMovesForRound()
@@ -516,7 +521,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
         {
             if( player.getCurrentCoordinates() == null )
             {
-                toast( "YOU MUST PLACE ALL PLAYERS IN A CIRCLE" );
+                toast( "Make sure all players are set" );
 
                 return null;
             }
@@ -528,14 +533,12 @@ public class BallsGameActivity extends SimpleBaseGameActivity
             player.setRoundStartCoordinates( player.getCurrentCoordinates() );
         }
 
-        if( mBall.getCurrentCoordinates() == null )
+        if( mTeam == mTeamInPossession )
         {
-            mBall.setCurrentCoordinates( mBall.getRoundStartCoordinates() );
+            moves.add( new Move( MoveType.BALL, null, null, mBall.getRoundStartCoordinates(), mBall.getCurrentCoordinates() ) );
+            mBall.setRoundStartCoordinates( mBall.getCurrentCoordinates() );
         }
-
-        moves.add( new Move( MoveType.BALL, null, null, mBall.getRoundStartCoordinates(), mBall.getCurrentCoordinates() ) );
-        mBall.setRoundStartCoordinates( mBall.getCurrentCoordinates() );
-
+        
         return moves;
     }
 
@@ -674,12 +677,12 @@ public class BallsGameActivity extends SimpleBaseGameActivity
 
             if( pMessage instanceof EndRoundServerMessage )
             {
-                if ( isWaiting )
+                if( isWaiting )
                 {
                     updateEntityPositions( ((EndRoundServerMessage) pMessage).getMoves() );
-                    
+
                     isWaiting = false;
-                    
+
                     if( waitForOtherUserMessage != null )
                     {
                         waitForOtherUserMessage.dismiss();

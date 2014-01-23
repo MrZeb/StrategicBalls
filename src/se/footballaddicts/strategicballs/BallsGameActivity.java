@@ -351,20 +351,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
 
         // updateEntityPositions( getMovesForRound() );
 
-        coinTossForBall();
-
         mBall.getSprite().setY( mPitchMatrix[5][5].getY() );
-
-        if( mTeamInPossession == TeamType.LEFT )
-        {
-            mBall.setRoundStartCoordinates( new Point( 5, 5 ) );
-            mBall.getSprite().setX( mPitchMatrix[5][5].getX() );
-        }
-        else
-        {
-            mBall.setRoundStartCoordinates( new Point( 6, 5 ) );
-            mBall.getSprite().setX( mPitchMatrix[6][5].getX() );
-        }
 
         scene.attachChild( mBall.getSprite() );
 
@@ -502,7 +489,18 @@ public class BallsGameActivity extends SimpleBaseGameActivity
     private void setTeamInPossession( TeamType team )
     {
         mTeamInPossession = team;
-        toast( "END ROUND! Team " + mTeamInPossession + "'s turn!" );
+        if( mTeamInPossession == TeamType.LEFT )
+        {
+            mBall.setRoundStartCoordinates( new Point( 5, 5 ) );
+            mBall.getSprite().setX( mPitchMatrix[5][5].getX() );
+        }
+        else
+        {
+            mBall.setRoundStartCoordinates( new Point( 6, 5 ) );
+            mBall.getSprite().setX( mPitchMatrix[6][5].getX() );
+        }
+        
+        mBall.setY( mPitchMatrix[5][5].getY() );
     }
 
     protected Set<Move> getMovesForRound()
@@ -672,6 +670,8 @@ public class BallsGameActivity extends SimpleBaseGameActivity
         {
             super.handleMessage( pConnector, pMessage );
 
+            Log.d("HIYA", "pMessage.class=" + pMessage.getClass());
+            
             if( pMessage instanceof EndRoundServerMessage )
             {
                 if( isWaiting )
@@ -697,7 +697,8 @@ public class BallsGameActivity extends SimpleBaseGameActivity
             }
             else if ( pMessage instanceof CoinTossServerMessage )
             {
-                mTeamInPossession = mTeam;
+                setTeamInPossession( ((CoinTossServerMessage) pMessage).teamInPossesion );
+                //mTeamInPossession = mTeam;
             }
         }
     }

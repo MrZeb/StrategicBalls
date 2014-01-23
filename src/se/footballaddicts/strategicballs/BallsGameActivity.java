@@ -463,15 +463,6 @@ public class BallsGameActivity extends SimpleBaseGameActivity
 
     protected void endRound()
     {
-        if( mTeamInPossession == TeamType.LEFT )
-        {
-            setTeamInPossession( TeamType.RIGHT );
-        }
-        else
-        {
-            setTeamInPossession( TeamType.LEFT );
-        }
-
         try
         {
             Set<Move> moves = getMovesForRound();
@@ -525,8 +516,8 @@ public class BallsGameActivity extends SimpleBaseGameActivity
 
                 return null;
             }
-            
-            if ( player.getTeam() == mTeam )
+
+            if( player.getTeam() == mTeam )
             {
                 moves.add( new Move( MoveType.PLAYER, player.getTeam(), player.getType(), player.getRoundStartCoordinates(), player.getCurrentCoordinates() ) );
             }
@@ -538,10 +529,12 @@ public class BallsGameActivity extends SimpleBaseGameActivity
 
         if( mTeam == mTeamInPossession )
         {
+            Log.d( "write", "add ball " + mTeam + " " + mTeamInPossession );
+
             moves.add( new Move( MoveType.BALL, null, null, mBall.getRoundStartCoordinates(), mBall.getCurrentCoordinates() ) );
             mBall.setRoundStartCoordinates( mBall.getCurrentCoordinates() );
         }
-        
+
         return moves;
     }
 

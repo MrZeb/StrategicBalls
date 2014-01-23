@@ -466,11 +466,15 @@ public class BallsGameActivity extends SimpleBaseGameActivity
         {
             setCurrentTeam( TeamType.LEFT );
         }
-
-        Set<Move> moves = getMovesForRound();
         
         try
         {
+            Set<Move> moves = getMovesForRound();
+
+            if( moves == null )
+            {
+                return;
+            }
             BallsGameActivity.this.mServerConnector.sendClientMessage( new EndRoundClientMessage( BallsGameActivity.this.mUserID, moves ) );
         }
         catch( final IOException e )
@@ -510,10 +514,17 @@ public class BallsGameActivity extends SimpleBaseGameActivity
 
         for( Player player : mPlayers )
         {
-            player.setCurrentCoordinates( player.getRoundStartCoordinates() );
+            if( player.getCurrentCoordinates() == null )
+            {
+                toast( "YOU MUST PLACE ALL PLAYERS IN A CIRCLE" );
+
+                return null;
+            }
 
             moves.add( new Move( MoveType.PLAYER, player.getTeam(), player.getType(), player.getRoundStartCoordinates(), player.getCurrentCoordinates() ) );
-            Log.d( "playermoves", player.getType() + " start: " + player.getRoundStartCoordinates() + " current: " + player.getCurrentCoordinates() );
+            // Log.d( "playermoves", player.getType() + " start: " +
+            // player.getRoundStartCoordinates() + " current: " +
+            // player.getCurrentCoordinates() );
             player.setRoundStartCoordinates( player.getCurrentCoordinates() );
         }
 
@@ -818,6 +829,8 @@ public class BallsGameActivity extends SimpleBaseGameActivity
                         mSelectedEntity = player;
 
                         this.setScale( 1.5f );
+
+                        player.setCurrentCoordinates( null );
                     }
 
                     return true;
@@ -828,6 +841,9 @@ public class BallsGameActivity extends SimpleBaseGameActivity
 
             scene.attachChild( sprite );
             scene.registerTouchArea( sprite );
+
+            player.setRoundStartCoordinates( logicalCoordinates );
+            player.setCurrentCoordinates( logicalCoordinates );
 
             mPlayers.add( player );
         }

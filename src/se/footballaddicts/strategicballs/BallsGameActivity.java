@@ -463,7 +463,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
         {
             Debug.e( e );
         }
-        
+
         runOnUiThread( new Runnable()
         {
             @Override
@@ -578,15 +578,15 @@ public class BallsGameActivity extends SimpleBaseGameActivity
     {
         try
         {
-            this.mServerConnector = new BallsServerConnector( this.mServerIP,  new ExampleServerConnectorListener(), new ExampleServerMessageReader() );
+            this.mServerConnector = new BallsServerConnector( this.mServerIP, new ExampleServerConnectorListener(), new ExampleServerMessageReader() );
 
             this.mServerConnector.registerServerMessage( EndRoundServerMessage.FLAG_END_ROUND_MESSAGE, EndRoundServerMessage.class );
-            
+
             this.mServerConnector.registerServerMessage( SetUserIDServerMessage.FLAG_SET_ID_MESSAGE, SetUserIDServerMessage.class );
-            
-            //this.mServerConnector
-            
-            //this.mServerConnector
+
+            // this.mServerConnector
+
+            // this.mServerConnector
 
             this.mServerConnector.getConnection().start();
         }
@@ -626,26 +626,27 @@ public class BallsGameActivity extends SimpleBaseGameActivity
             BallsGameActivity.this.toast( "SERVER: Client disconnected: " + pClientConnector.getConnection().getSocket().getInetAddress().getHostAddress() );
         }
     }
-    
+
     public class ExampleServerMessageReader extends ServerMessageReader<SocketConnection>
     {
         @Override
         public void handleMessage( ServerConnector<SocketConnection> pConnector, IServerMessage pMessage ) throws IOException
         {
             super.handleMessage( pConnector, pMessage );
-            
-            if ( pMessage instanceof EndRoundServerMessage )
+
+            if( pMessage instanceof EndRoundServerMessage )
             {
-                
+                updateEntityPositions( ((EndRoundServerMessage) pMessage).getMoves() );
             }
         }
     }
 
     private class BallsServerConnector extends ServerConnector<SocketConnection> implements BallsConstants, ServerMessageFlags
     {
-        public BallsServerConnector( final String pServerIP, final ISocketConnectionServerConnectorListener pSocketConnectionServerConnectorListener, ExampleServerMessageReader pServerMessageReader ) throws IOException
-        {   
-            super( new SocketConnection( new Socket( pServerIP, SERVER_PORT ) ), pServerMessageReader, pSocketConnectionServerConnectorListener);
+        public BallsServerConnector( final String pServerIP, final ISocketConnectionServerConnectorListener pSocketConnectionServerConnectorListener, ExampleServerMessageReader pServerMessageReader )
+                                                                                                                                                                                                       throws IOException
+        {
+            super( new SocketConnection( new Socket( pServerIP, SERVER_PORT ) ), pServerMessageReader, pSocketConnectionServerConnectorListener );
         }
 
         @Override
@@ -653,8 +654,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
         {
             super.read( pDataInputStream );
         }
-        
-        
+
     }
 
     private void addPlayers( TeamType team, Scene scene )

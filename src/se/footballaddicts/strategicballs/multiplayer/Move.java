@@ -1,6 +1,7 @@
 package se.footballaddicts.strategicballs.multiplayer;
 
 import se.footballaddicts.strategicballs.Player.PlayerType;
+import se.footballaddicts.strategicballs.Player.TeamType;
 import android.graphics.Point;
 
 public class Move
@@ -75,19 +76,21 @@ public class Move
     };
 
     private MoveType   moveType;
+    private TeamType       team;
     private PlayerType playerType;
     private Point      from;
     private Point      to;
 
-    public Move( MoveType moveType, PlayerType playerType, Point from, Point to )
+    public Move( MoveType moveType, TeamType team, PlayerType playerType, Point from, Point to )
     {
         this.moveType = moveType;
+        this.team = team;
         this.setPlayerType( playerType );
         this.from = from;
         this.to = to;
     }
 
-    public MoveType getMoveType()
+    public MoveType getType()
     {
         return moveType;
     }
@@ -97,9 +100,19 @@ public class Move
         return from;
     }
 
+    public void setFrom( Point from )
+    {
+        this.from = from;
+    }
+
     public Point getTo()
     {
         return to;
+    }
+
+    public void setTo( Point to )
+    {
+        this.to = to;
     }
 
     public PlayerType getPlayerType()
@@ -112,4 +125,13 @@ public class Move
         this.playerType = playerType;
     }
 
+    public TeamType getTeam()
+    {
+        return team;
+    }
+
+    public void setTeam( TeamType team )
+    {
+        this.team = team;
+    }
 }

@@ -45,10 +45,10 @@ public class Player extends BallsEntity
             }
         }
 
-        public Point getLogicalCoordinates( Team team, int pitchLength )
+        public Point getLogicalCoordinates( TeamType team, int pitchLength )
         {
-            int xBase = team == Team.A ? 0 : pitchLength;
-            int factor = team == Team.A ? 1 : -1;
+            int xBase = team == TeamType.A ? 0 : pitchLength;
+            int factor = team == TeamType.A ? 1 : -1;
 
             switch( this )
             {
@@ -97,15 +97,15 @@ public class Player extends BallsEntity
         }
     }
 
-    enum Team
+    public enum TeamType
     {
         A, B;
     }
 
-    private Team       team;
+    private TeamType       team;
     private PlayerType type;
 
-    public Player( Point coordinates, PlayerType type, Team team )
+    public Player( Point coordinates, PlayerType type, TeamType team )
     {
         super( coordinates );
 
@@ -113,7 +113,7 @@ public class Player extends BallsEntity
         this.team = team;
     }
 
-    public Player( Point coordinates, PlayerType type, Team team, Sprite sprite )
+    public Player( Point coordinates, PlayerType type, TeamType team, Sprite sprite )
     {
         super( coordinates, sprite );
 
@@ -121,12 +121,12 @@ public class Player extends BallsEntity
         this.team = team;
     }
 
-    public Team getTeam()
+    public TeamType getTeam()
     {
         return team;
     }
 
-    public void setTeam( Team team )
+    public void setTeam( TeamType team )
     {
         this.team = team;
     }

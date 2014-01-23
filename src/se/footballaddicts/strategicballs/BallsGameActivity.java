@@ -50,7 +50,7 @@ import org.andengine.util.debug.Debug;
 
 import se.footballaddicts.strategicballs.Player.GeneralPlayerType;
 import se.footballaddicts.strategicballs.Player.PlayerType;
-import se.footballaddicts.strategicballs.Player.Team;
+import se.footballaddicts.strategicballs.Player.TeamType;
 import se.footballaddicts.strategicballs.multiplayer.BallsServer;
 import se.footballaddicts.strategicballs.multiplayer.EndRoundClientMessage;
 import se.footballaddicts.strategicballs.multiplayer.EndRoundServerMessage;
@@ -109,12 +109,12 @@ public class BallsGameActivity extends SimpleBaseGameActivity
     private Camera                      mCamera;
 
     private Cell                        mCollidingRectangle;
-    protected int                       mLatestTouchEvent;
+    protected boolean                   mDropSelection;
 
     private TextureRegion               mGoalLeftTextureRegion;
     private TextureRegion               mGoalRightTextureRegion;
     private TiledTextureRegion          mBallTextureRegion;
-    protected BallsEntity               mLatestEntity;
+    protected BallsEntity               mSelectedEntity;
 
     private ArrayList<Player>           mPlayers                          = new ArrayList<Player>();
     private float                       centerX;
@@ -135,13 +135,14 @@ public class BallsGameActivity extends SimpleBaseGameActivity
     private TextureRegion               mGoalkeeperATextureRegion;
     private TextureRegion               mGoalkeeperBTextureRegion;
 
-    private Team                        mCurrentTeam;
+    private TeamType                    mCurrentTeam;
 
     private Entity[][]                  mPitchMatrix;
     protected boolean                   isServer;
     private Font                        mFont;
 
     private Toast                       currentToast;
+    private Ball                        mBall;
 
     @Override
     public EngineOptions onCreateEngineOptions()
@@ -298,9 +299,9 @@ public class BallsGameActivity extends SimpleBaseGameActivity
         scene.attachChild( roundCompleteButton );
         scene.registerTouchArea( roundCompleteButton );
 
-        final Ball ball = new Ball();
+        mBall = new Ball();
 
-        ball.setSprite( new AnimatedSprite( 0, 0, this.mBallTextureRegion, this.getVertexBufferObjectManager() )
+        mBall.setSprite( new AnimatedSprite( 0, 0, this.mBallTextureRegion, this.getVertexBufferObjectManager() )
         {
             @Override
             public boolean onAreaTouched( TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY )
@@ -310,36 +311,38 @@ public class BallsGameActivity extends SimpleBaseGameActivity
 
                 this.setPosition( getProperX( xPosition ), getProperY( yPosition ) );
 
-                mLatestTouchEvent = pSceneTouchEvent.getAction();
-                mLatestEntity = ball;
+                mDropSelection = pSceneTouchEvent.getAction() == TouchEvent.ACTION_UP;
+                mSelectedEntity = mBall;
 
                 this.setScale( 1.5f );
 
                 return true;
             }
         } );
-        scene.registerTouchArea( ball.getSprite() );
-
+        scene.registerTouchArea( mBall.getSprite() );
+        Log.d( "opponent", "before set" );
         // Add players
-        addPlayers( Team.B, scene );
-        addPlayers( Team.A, scene );
+        addPlayers( TeamType.B, scene );
+        addPlayers( TeamType.A, scene );
+
+        updateEntityPositions( getMovesForRound() );
 
         coinTossForBall();
 
-        ball.getSprite().setY( mPitchMatrix[5][5].getY() );
+        mBall.getSprite().setY( mPitchMatrix[5][5].getY() );
 
-        if( mCurrentTeam == Team.A )
+        if( mCurrentTeam == TeamType.A )
         {
-            ball.setRoundStartCoordinates( new Point( 5, 5 ) );
-            ball.getSprite().setX( mPitchMatrix[5][5].getX() );
+            mBall.setRoundStartCoordinates( new Point( 5, 5 ) );
+            mBall.getSprite().setX( mPitchMatrix[5][5].getX() );
         }
         else
         {
-            ball.setRoundStartCoordinates( new Point( 6, 5 ) );
-            ball.getSprite().setX( mPitchMatrix[6][5].getX() );
+            mBall.setRoundStartCoordinates( new Point( 6, 5 ) );
+            mBall.getSprite().setX( mPitchMatrix[6][5].getX() );
         }
 
-        scene.attachChild( ball.getSprite() );
+        scene.attachChild( mBall.getSprite() );
 
         scene.setTouchAreaBindingOnActionDownEnabled( true );
 
@@ -382,13 +385,13 @@ public class BallsGameActivity extends SimpleBaseGameActivity
                     scene.attachChild( leftText );
                 }
 
-                if( mLatestEntity != null )
+                if( mSelectedEntity != null )
                 {
                     for( Entity[] rectRow : mPitchMatrix )
                     {
                         for( Entity centerRectangle : rectRow )
                         {
-                            if( ((RectangularShape) centerRectangle).collidesWith( mLatestEntity.getSprite() ) )
+                            if( ((RectangularShape) centerRectangle).collidesWith( mSelectedEntity.getSprite() ) )
                             {
                                 mCollidingRectangle = (Cell) centerRectangle;
                                 centerRectangle.setColor( 1, 0, 1 );
@@ -401,15 +404,15 @@ public class BallsGameActivity extends SimpleBaseGameActivity
                         }
                     }
 
-                    if( mLatestTouchEvent == TouchEvent.ACTION_UP && mCollidingRectangle != null )
+                    if( mDropSelection && mCollidingRectangle != null )
                     {
-                        mLatestEntity.getSprite().setScale( 1.0f );
+                        mSelectedEntity.getSprite().setScale( 1.0f );
 
                         // SNAP
-                        mLatestEntity.getSprite().setX( mCollidingRectangle.getX() );
-                        mLatestEntity.getSprite().setY( mCollidingRectangle.getY() );
+                        mSelectedEntity.getSprite().setX( mCollidingRectangle.getX() );
+                        mSelectedEntity.getSprite().setY( mCollidingRectangle.getY() );
 
-                        mLatestEntity.setCurrentCoordinates( mCollidingRectangle.getCoordinates() );
+                        mSelectedEntity.setCurrentCoordinates( mCollidingRectangle.getCoordinates() );
                     }
                 }
 
@@ -427,23 +430,23 @@ public class BallsGameActivity extends SimpleBaseGameActivity
     {
         if( new Random().nextInt( 2 ) == 1 )
         {
-            setCurrentTeam( Team.A );
+            setCurrentTeam( TeamType.A );
         }
         else
         {
-            setCurrentTeam( Team.B );
+            setCurrentTeam( TeamType.B );
         }
     }
 
     protected void endRound()
     {
-        if( mCurrentTeam == Team.A )
+        if( mCurrentTeam == TeamType.A )
         {
-            setCurrentTeam( Team.B );
+            setCurrentTeam( TeamType.B );
         }
         else
         {
-            setCurrentTeam( Team.A );
+            setCurrentTeam( TeamType.A );
         }
 
         try
@@ -456,7 +459,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
         }
     }
 
-    private void setCurrentTeam( Team team )
+    private void setCurrentTeam( TeamType team )
     {
         mCurrentTeam = team;
         toast( "END ROUND! Team " + mCurrentTeam + "'s turn!" );
@@ -473,20 +476,58 @@ public class BallsGameActivity extends SimpleBaseGameActivity
                 player.setCurrentCoordinates( player.getRoundStartCoordinates() );
             }
 
-            moves.add( new Move( MoveType.PLAYER, player.getType(), player.getRoundStartCoordinates(), player.getCurrentCoordinates() ) );
+            moves.add( new Move( MoveType.PLAYER, player.getTeam(), player.getType(), player.getRoundStartCoordinates(), player.getCurrentCoordinates() ) );
             Log.d( "playermoves", player.getType() + " start: " + player.getRoundStartCoordinates() + " current: " + player.getCurrentCoordinates() );
             player.setRoundStartCoordinates( player.getCurrentCoordinates() );
         }
 
+        if( mBall.getCurrentCoordinates() == null )
+        {
+            mBall.setCurrentCoordinates( mBall.getRoundStartCoordinates() );
+        }
+
+        moves.add( new Move( MoveType.BALL, null, null, mBall.getRoundStartCoordinates(), mBall.getCurrentCoordinates() ) );
+        mBall.setRoundStartCoordinates( mBall.getCurrentCoordinates() );
+
         return moves;
     }
 
-    private void setOpponentPlayerPositions( Set<Move> moves )
+    private void updateEntityPositions( Set<Move> moves )
     {
+        Log.d( "opponent", "init" );
+
         for( Move move : moves )
         {
+            if( move.getType() == MoveType.PLAYER )
+            {
+                for( Player player : mPlayers )
+                {
+                    if( player.getTeam() == move.getTeam() && player.getType() == move.getPlayerType() )
+                    {
+                        Log.d( "opponent", player.getType() + " " + player.getTeam() + " start: " + player.getRoundStartCoordinates() + " current: " + player.getCurrentCoordinates() + " from: "
+                                + move.getFrom() + " to: " + move.getTo() );
 
+                        move.setTo( new Point( move.getTo().x, move.getTo().y - 1 ) );
+
+                        moveEntity( player, move );
+
+                        break;
+                    }
+                }
+            }
+            else if( move.getType() == MoveType.BALL )
+            {
+                moveEntity( mBall, move );
+            }
         }
+    }
+
+    private void moveEntity( Entity entity, Move move )
+    {
+        Log.d( "opponentmove", entity.getClass() + " " + move.getType() + " " + move.getTo() );
+
+        entity.getSprite().setX( mPitchMatrix[move.getTo().x][move.getTo().y].getX() );
+        entity.getSprite().setY( mPitchMatrix[move.getTo().x][move.getTo().y].getY() );
     }
 
     private void initServerAndClient()
@@ -579,7 +620,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
         }
     }
 
-    private void addPlayers( Team team, Scene scene )
+    private void addPlayers( TeamType team, Scene scene )
     {
         for( int i = 0; i < 6; i++ )
         {
@@ -600,7 +641,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
 
                     logicalCoordinates = type.getLogicalCoordinates( team, mPitchMatrix[0].length );
 
-                    if( team == Team.A )
+                    if( team == TeamType.A )
                     {
                         xPosition = mPitchMatrix[5][3].getX();
 
@@ -632,7 +673,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
 
                     logicalCoordinates = type.getLogicalCoordinates( team, mPitchMatrix[0].length );
 
-                    if( team == Team.A )
+                    if( team == TeamType.A )
                     {
                         xPosition = mPitchMatrix[logicalCoordinates.x][0].getX();
 
@@ -655,7 +696,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
 
                     logicalCoordinates = type.getLogicalCoordinates( team, mPitchMatrix[0].length );
 
-                    if( team == Team.A )
+                    if( team == TeamType.A )
                     {
                         xPosition = mPitchMatrix[logicalCoordinates.x][0].getX();
                         yPosition = mPitchMatrix[0][logicalCoordinates.y].getY();
@@ -688,8 +729,8 @@ public class BallsGameActivity extends SimpleBaseGameActivity
 
                     this.setPosition( getProperX( xPosition ), getProperY( yPosition ) );
 
-                    mLatestTouchEvent = pSceneTouchEvent.getAction();
-                    mLatestEntity = player;
+                    mDropSelection = pSceneTouchEvent.getAction() == TouchEvent.ACTION_UP;
+                    mSelectedEntity = player;
 
                     this.setScale( 1.5f );
 

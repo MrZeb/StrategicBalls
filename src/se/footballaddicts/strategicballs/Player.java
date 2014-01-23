@@ -1,114 +1,143 @@
 package se.footballaddicts.strategicballs;
 
-import org.andengine.entity.Entity;
 import org.andengine.entity.sprite.Sprite;
 
 import android.graphics.Point;
 
-public class Player extends Entity
+public class Player extends BallsEntity
 {
-    enum Position
+    enum GeneralPlayerType
     {
-        GOALKEEPER( 1 ), DEFENDER( 1 ), ATTACKER( 3 );
+        GOALKEEPER, DEFENDER, ATTACKER;
+    }
+
+    public enum PlayerType
+    {
+        GOALKEEPER( 0, 1 ), TOP_DEFENDER( 1, 1 ), BOT_DEFENDER( 2, 1 ), TOP_ATTACKER( 3, 3 ), MID_ATTACKER( 4, 3 ), BOT_ATTACKER( 5, 3 );
 
         int moves;
+        int index;
 
-        Position( int moves )
+        PlayerType( int index, int moves )
         {
+            this.index = index;
             this.moves = moves;
         }
 
-        public static Position getPositionForIndex( int index )
+        public static PlayerType getTypeForIndex( int index )
         {
-            if( index == 0 )
+            switch( index )
             {
-                return GOALKEEPER;
+                case 0:
+                    return GOALKEEPER;
+                case 1:
+                    return TOP_DEFENDER;
+                case 2:
+                    return BOT_DEFENDER;
+                case 3:
+                    return TOP_ATTACKER;
+                case 4:
+                    return MID_ATTACKER;
+                case 5:
+                    return BOT_ATTACKER;
+                default:
+                    return null;
             }
-            else if( index == 1 || index == 2 )
+        }
+
+        public Point getLogicalCoordinates( TeamType team, int pitchLength )
+        {
+            int xBase = team == TeamType.A ? 0 : pitchLength;
+            int factor = team == TeamType.A ? 1 : -1;
+
+            switch( this )
             {
-                return DEFENDER;
+                case TOP_ATTACKER:
+                    return new Point( 5 * factor + xBase, 2 );
+
+                case MID_ATTACKER:
+                    return new Point( 5 * factor + xBase, 5 );
+
+                case BOT_ATTACKER:
+                    return new Point( 5 * factor + xBase, 8 );
+
+                case TOP_DEFENDER:
+                    return new Point( 3 * factor + xBase, 3 );
+
+                case BOT_DEFENDER:
+                    return new Point( 3 * factor + xBase, 7 );
+
+                case GOALKEEPER:
+                    return new Point( xBase, 5 );
+
+                default:
+                    return null;
+            }
+        }
+
+        public GeneralPlayerType getGeneralType()
+        {
+            if( ordinal() == 0 )
+            {
+                return GeneralPlayerType.GOALKEEPER;
+            }
+            else if( ordinal() <= 2 )
+            {
+                return GeneralPlayerType.DEFENDER;
             }
             else
             {
-                return ATTACKER;
+                return GeneralPlayerType.ATTACKER;
             }
+        }
+
+        public int getIndex()
+        {
+            return index;
         }
     }
 
-    enum Team
+    public enum TeamType
     {
         A, B;
     }
 
-    private Point    currentCoordinates;
-    private Point    roundStartCoordinates;
-    private Position position;
-    private Team     team;
-    private Sprite   sprite;
+    private TeamType       team;
+    private PlayerType type;
 
-    public Player( Point coordinates, Position position, Team team )
+    public Player( Point coordinates, PlayerType type, TeamType team )
     {
-        this.roundStartCoordinates = coordinates;
-        this.position = position;
+        super( coordinates );
+
+        this.type = type;
         this.team = team;
-        this.sprite = null;
     }
 
-    public Player( Point coordinates, Position position, Team team, Sprite sprite )
+    public Player( Point coordinates, PlayerType type, TeamType team, Sprite sprite )
     {
-        this.roundStartCoordinates = coordinates;
-        this.position = position;
+        super( coordinates, sprite );
+
+        this.type = type;
         this.team = team;
-        this.sprite = sprite;
     }
 
-    public Position getPosition()
-    {
-        return position;
-    }
-
-    public void setPosition( Position position )
-    {
-        this.position = position;
-    }
-
-    public Point getCurrentCoordinates()
-    {
-        return currentCoordinates;
-    }
-
-    public void setCurrentCoordinates( Point coordinates )
-    {
-        this.currentCoordinates = coordinates;
-    }
-
-    public Team getTeam()
+    public TeamType getTeam()
     {
         return team;
     }
 
-    public void setTeam( Team team )
+    public void setTeam( TeamType team )
     {
         this.team = team;
     }
 
-    public Sprite getSprite()
+    public PlayerType getType()
     {
-        return sprite;
+        return type;
     }
 
-    public void setSprite( Sprite sprite )
+    public void setType( PlayerType type )
     {
-        this.sprite = sprite;
-    }
-
-    public Point getRoundStartCoordinates()
-    {
-        return roundStartCoordinates;
-    }
-
-    public void setRoundStartCoordinates( Point roundStartCoordinates )
-    {
-        this.roundStartCoordinates = roundStartCoordinates;
+        this.type = type;
     }
 }

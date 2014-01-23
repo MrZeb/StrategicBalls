@@ -319,13 +319,14 @@ public class BallsGameActivity extends SimpleBaseGameActivity
                 return true;
             }
         } );
+
         scene.registerTouchArea( mBall.getSprite() );
-        Log.d( "opponent", "before set" );
+
         // Add players
         addPlayers( TeamType.B, scene );
         addPlayers( TeamType.A, scene );
 
-        updateEntityPositions( getMovesForRound() );
+        // updateEntityPositions( getMovesForRound() );
 
         coinTossForBall();
 
@@ -522,7 +523,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
         }
     }
 
-    private void moveEntity( Entity entity, Move move )
+    private void moveEntity( BallsEntity entity, Move move )
     {
         Log.d( "opponentmove", entity.getClass() + " " + move.getType() + " " + move.getTo() );
 

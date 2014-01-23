@@ -126,7 +126,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
     private BallsServer                 mServer;
     private BallsServerConnector        mServerConnector;
     private String                      mServerIP;
-    protected Integer                    mUserID;
+    protected Integer                   mUserID;
     private TiledTextureRegion          mRoundActiveTextureRegion;
     private TextureRegion               mRoundCompleteTextureRegion;
     private Sprite                      roundActiveButton;
@@ -153,6 +153,8 @@ public class BallsGameActivity extends SimpleBaseGameActivity
     
     private boolean                     isWaiting = false;
     private Set<Move>                   storedMoves;
+
+    private AlertDialog                 mWaitingForConnectionDialog;
 
     @Override
     public EngineOptions onCreateEngineOptions()
@@ -508,10 +510,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
 
         for( Player player : mPlayers )
         {
-            if( player.getCurrentCoordinates() == null )
-            {
-                player.setCurrentCoordinates( player.getRoundStartCoordinates() );
-            }
+            player.setCurrentCoordinates( player.getRoundStartCoordinates() );
 
             moves.add( new Move( MoveType.PLAYER, player.getTeam(), player.getType(), player.getRoundStartCoordinates(), player.getCurrentCoordinates() ) );
             Log.d( "playermoves", player.getType() + " start: " + player.getRoundStartCoordinates() + " current: " + player.getCurrentCoordinates() );
@@ -559,8 +558,13 @@ public class BallsGameActivity extends SimpleBaseGameActivity
 
     private void moveEntity( BallsEntity entity, Move move )
     {
-        entity.getSprite().setX( mPitchMatrix[move.getTo().x][move.getTo().y].getX() );
-        entity.getSprite().setY( mPitchMatrix[move.getTo().x][move.getTo().y].getY() );
+        int toX = move.getTo().x;
+        int toY = move.getTo().y;
+
+        entity.getSprite().setX( mPitchMatrix[toX][toY].getX() );
+        entity.getSprite().setY( mPitchMatrix[toX][toY].getY() );
+
+        entity.setRoundStartCoordinates( new Point( toX, toY ) );
     }
 
     private void initServerAndClient()
@@ -635,6 +639,11 @@ public class BallsGameActivity extends SimpleBaseGameActivity
         @Override
         public void onStarted( final ClientConnector<SocketConnection> pClientConnector )
         {
+            if( mWaitingForConnectionDialog != null )
+            {
+                mWaitingForConnectionDialog.dismiss();
+            }
+
             BallsGameActivity.this.toast( "SERVER: Client connected: " + pClientConnector.getConnection().getSocket().getInetAddress().getHostAddress() );
         }
 
@@ -670,7 +679,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
                     storedMoves = ((EndRoundServerMessage) pMessage).getMoves();
                 }
             }
-            else if ( pMessage instanceof SetUserIDServerMessage )
+            else if( pMessage instanceof SetUserIDServerMessage )
             {
                 mUserID = ((SetUserIDServerMessage) pMessage).mUserID;
                 mTeam = ((SetUserIDServerMessage) pMessage).team;
@@ -798,7 +807,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
                 @Override
                 public boolean onAreaTouched( final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY )
                 {
-                    if ( mTeam == player.getTeam() )
+                    if( mTeam == player.getTeam() )
                     {
                         float xPosition = pSceneTouchEvent.getX() - this.getWidth() / 2;
                         float yPosition = pSceneTouchEvent.getY() - this.getHeight() / 2;
@@ -897,8 +906,17 @@ public class BallsGameActivity extends SimpleBaseGameActivity
             case DIALOG_SHOW_SERVER_IP_ID:
                 try
                 {
-                    return new AlertDialog.Builder( this ).setIcon( android.R.drawable.ic_dialog_info ).setTitle( "Your Server-IP ..." ).setCancelable( false )
-                            .setMessage( "The IP of your Server is:\n" + WifiUtils.getWifiIPv4Address( this ) ).setPositiveButton( android.R.string.ok, null ).create();
+                    mWaitingForConnectionDialog = new AlertDialog.Builder( this ).setIcon( android.R.drawable.ic_dialog_info ).setTitle( "Your Server-IP ..." ).setCancelable( false )
+                            .setMessage( "The IP of your Server is:\n" + WifiUtils.getWifiIPv4Address( this ) + "\n\nWaiting for a friend..." ).setPositiveButton( "OK", new OnClickListener()
+                            {
+                                @Override
+                                public void onClick( final DialogInterface pDialog, final int pWhich )
+                                {
+
+                                }
+                            } ).create();
+
+                    return mWaitingForConnectionDialog;
                 }
                 catch( final UnknownHostException e )
                 {

@@ -8,6 +8,15 @@ public class Ball extends BallsEntity
 {
     protected final PhysicsHandler mPhysicsHandler;
 
+    public Ball()
+    {
+        super( new Point( 0, 0 ) );
+        
+        this.mPhysicsHandler = new PhysicsHandler( this );
+        this.registerUpdateHandler( this.mPhysicsHandler );
+        // this.mPhysicsHandler.setVelocity( BALL_VELOCITY, 0 );
+    }
+
     public Ball( int logicalX, int logicalY )
     {
         super( new Point( logicalX, logicalY ) );

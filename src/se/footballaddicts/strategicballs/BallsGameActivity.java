@@ -298,25 +298,9 @@ public class BallsGameActivity extends SimpleBaseGameActivity
         scene.attachChild( roundCompleteButton );
         scene.registerTouchArea( roundCompleteButton );
 
-        coinTossForBall();
+        final Ball ball = new Ball();
 
-        int logicalBallX, logicalBallY = 5;
-        float realBallX, realBallY = 50f;
-
-        if( mCurrentTeam == Team.A )
-        {
-            logicalBallX = 5;
-            realBallX = 123f;
-        }
-        else
-        {
-            logicalBallX = 6;
-            realBallX = 123f;
-        }
-
-        final Ball ball = new Ball( logicalBallX, logicalBallY );
-
-        ball.setSprite( new AnimatedSprite( realBallX, realBallY, this.mBallTextureRegion, this.getVertexBufferObjectManager() )
+        ball.setSprite( new AnimatedSprite( 0, 0, this.mBallTextureRegion, this.getVertexBufferObjectManager() )
         {
             @Override
             public boolean onAreaTouched( TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY )
@@ -339,6 +323,21 @@ public class BallsGameActivity extends SimpleBaseGameActivity
         // Add players
         addPlayers( Team.B, scene );
         addPlayers( Team.A, scene );
+
+        coinTossForBall();
+
+        ball.getSprite().setY( mPitchMatrix[5][5].getY() );
+
+        if( mCurrentTeam == Team.A )
+        {
+            ball.setRoundStartCoordinates( new Point( 5, 5 ) );
+            ball.getSprite().setX( mPitchMatrix[5][5].getX() );
+        }
+        else
+        {
+            ball.setRoundStartCoordinates( new Point( 6, 5 ) );
+            ball.getSprite().setX( mPitchMatrix[6][5].getX() );
+        }
 
         scene.attachChild( ball.getSprite() );
 
@@ -428,11 +427,11 @@ public class BallsGameActivity extends SimpleBaseGameActivity
     {
         if( new Random().nextInt( 2 ) == 1 )
         {
-            mCurrentTeam = Team.A;
+            setCurrentTeam( Team.A );
         }
         else
         {
-            mCurrentTeam = Team.B;
+            setCurrentTeam( Team.B );
         }
     }
 
@@ -440,14 +439,12 @@ public class BallsGameActivity extends SimpleBaseGameActivity
     {
         if( mCurrentTeam == Team.A )
         {
-            mCurrentTeam = Team.B;
+            setCurrentTeam( Team.B );
         }
         else
         {
-            mCurrentTeam = Team.A;
+            setCurrentTeam( Team.A );
         }
-
-        toast( "END ROUND! Team " + mCurrentTeam + "'s turn!" );
 
         try
         {
@@ -457,7 +454,12 @@ public class BallsGameActivity extends SimpleBaseGameActivity
         {
             Debug.e( e );
         }
+    }
 
+    private void setCurrentTeam( Team team )
+    {
+        mCurrentTeam = team;
+        toast( "END ROUND! Team " + mCurrentTeam + "'s turn!" );
     }
 
     protected Set<Move> getMovesForRound()

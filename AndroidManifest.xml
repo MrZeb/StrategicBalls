@@ -27,6 +27,7 @@
         <activity
             android:name="se.footballaddicts.strategicballs.BallsGameActivity"
             android:label="@string/app_name"
+            android:screenOrientation="landscape"
             android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

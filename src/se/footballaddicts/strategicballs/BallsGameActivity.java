@@ -501,7 +501,6 @@ public class BallsGameActivity extends SimpleBaseGameActivity
     private void setTeamInPossession( TeamType team )
     {
         mTeamInPossession = team;
-        toast( "END ROUND! Team " + mTeamInPossession + "'s turn!" );
     }
 
     protected Set<Move> getMovesForRound()

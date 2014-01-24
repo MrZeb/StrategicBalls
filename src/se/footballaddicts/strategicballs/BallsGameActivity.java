@@ -59,6 +59,7 @@ import se.footballaddicts.strategicballs.multiplayer.EndRoundServerMessage;
 import se.footballaddicts.strategicballs.multiplayer.Move;
 import se.footballaddicts.strategicballs.multiplayer.Move.MoveType;
 import se.footballaddicts.strategicballs.multiplayer.SetUserIDServerMessage;
+import se.footballaddicts.strategicballs.multiplayer.server.CoinTossServerMessage;
 import se.footballaddicts.strategicballs.multiplayer.server.ServerMessageFlags;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -318,7 +319,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
 
         mBall = new Ball();
 
-        mBall.setSprite( new AnimatedSprite( 0, 0, this.mBallTextureRegion, this.getVertexBufferObjectManager() )
+        mBall.setSprite( new AnimatedSprite( centerX, centerY, this.mBallTextureRegion, this.getVertexBufferObjectManager() )
         {
             @Override
             public boolean onAreaTouched( TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY )
@@ -350,20 +351,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
 
         // updateEntityPositions( getMovesForRound() );
 
-        coinTossForBall();
-
         mBall.getSprite().setY( mPitchMatrix[5][5].getY() );
-
-        if( mTeamInPossession == TeamType.LEFT )
-        {
-            mBall.setRoundStartCoordinates( new Point( 5, 5 ) );
-            mBall.getSprite().setX( mPitchMatrix[5][5].getX() );
-        }
-        else
-        {
-            mBall.setRoundStartCoordinates( new Point( 6, 5 ) );
-            mBall.getSprite().setX( mPitchMatrix[6][5].getX() );
-        }
 
         scene.attachChild( mBall.getSprite() );
 
@@ -501,6 +489,19 @@ public class BallsGameActivity extends SimpleBaseGameActivity
     private void setTeamInPossession( TeamType team )
     {
         mTeamInPossession = team;
+
+        if( mTeamInPossession == TeamType.LEFT )
+        {
+            mBall.setRoundStartCoordinates( new Point( 5, 5 ) );
+            mBall.getSprite().setX( mPitchMatrix[5][5].getX() );
+        }
+        else
+        {
+            mBall.setRoundStartCoordinates( new Point( 6, 5 ) );
+            mBall.getSprite().setX( mPitchMatrix[6][5].getX() );
+        }
+        
+        mBall.setY( mPitchMatrix[5][5].getY() );
     }
 
     protected Set<Move> getMovesForRound()
@@ -615,7 +616,7 @@ public class BallsGameActivity extends SimpleBaseGameActivity
 
             this.mServerConnector.registerServerMessage( SetUserIDServerMessage.FLAG_SET_ID_MESSAGE, SetUserIDServerMessage.class );
 
-            // this.mServerConnector
+            this.mServerConnector.registerServerMessage( CoinTossServerMessage.FLAG_COIN_TOSS, CoinTossServerMessage.class );
 
             // this.mServerConnector
 
@@ -670,6 +671,8 @@ public class BallsGameActivity extends SimpleBaseGameActivity
         {
             super.handleMessage( pConnector, pMessage );
 
+            Log.d("HIYA", "pMessage.class=" + pMessage.getClass());
+            
             if( pMessage instanceof EndRoundServerMessage )
             {
                 if( isWaiting )
@@ -692,6 +695,11 @@ public class BallsGameActivity extends SimpleBaseGameActivity
             {
                 mUserID = ((SetUserIDServerMessage) pMessage).mUserID;
                 mTeam = ((SetUserIDServerMessage) pMessage).team;
+            }
+            else if ( pMessage instanceof CoinTossServerMessage )
+            {
+                setTeamInPossession( ((CoinTossServerMessage) pMessage).teamInPossesion );
+                //mTeamInPossession = mTeam;
             }
         }
     }
